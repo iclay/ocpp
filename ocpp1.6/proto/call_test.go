@@ -32,7 +32,7 @@ func callSuccess() *Call {
 		MessageTypeID: 2,
 		UniqueID:      "uniqueid",
 		Action:        "Authorize",
-		Request:       "request",
+		// Request:       "request",
 	}
 
 }
