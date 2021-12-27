@@ -31,7 +31,7 @@ func newCallStateMap() *callStateMap {
 	}
 }
 
-func (m *callStateMap) CreateNewRequest(id string) {
+func (m *callStateMap) createNewRequest(id string) {
 	m.Lock()
 	defer m.Unlock()
 	m.pendingCallState[id] = &request{
@@ -87,7 +87,7 @@ func newRequesQueueMap() *requestQueueMap {
 	}
 }
 
-func (m *requestQueueMap) CreateNewQueue(id string) {
+func (m *requestQueueMap) createNewQueue(id string) {
 	m.Lock()
 	defer m.Unlock()
 	m.queueMap[id] = NewQueue()
@@ -101,14 +101,14 @@ func (m *requestQueueMap) queueExists(id string) bool {
 	return ok
 }
 
-func (m *requestQueueMap) GetQueue(id string) (Queue, bool) {
+func (m *requestQueueMap) getQueue(id string) (Queue, bool) {
 	m.RLock()
 	defer m.RUnlock()
 	q, ok := m.queueMap[id]
 	return q, ok
 }
 
-func (m *requestQueueMap) DeleteQueue(id string) {
+func (m *requestQueueMap) deleteQueue(id string) {
 	m.Lock()
 	defer m.Unlock()
 	delete(m.queueMap, id)
@@ -175,7 +175,7 @@ func (d *dispatcher) run() {
 		close(d.timeoutC)
 		for _, timeoutCtx := range contextMap {
 			if timeoutCtx.isActive() {
-				timeoutCtx.cancel() //通知所有的超时协程退出
+				timeoutCtx.cancel() //notify all timeout goroutine to exit
 			}
 		}
 	}()
@@ -184,31 +184,31 @@ func (d *dispatcher) run() {
 		case <-d.stopC:
 			log.Debugf("dispatcher has stopped")
 			return
-		case id = <-d.requestC: //clientid触发,如果队列不为空，则取出
-			q, ok = d.requestQueueMap.GetQueue(id)
-			if !ok { //不存在，说明连接已经关闭，已经删除
-				if ctx, ok := contextMap[id]; ok { //可能出现的情况是，有过下行数据，但是连接关闭，但是clientid key值还在,需要删除
+		case id = <-d.requestC:
+			q, ok = d.requestQueueMap.getQueue(id)
+			if !ok { //the connection may have been closed
+				if ctx, ok := contextMap[id]; ok { //this may happen when there has been a request but the connection has been closed
 					if ctx.isActive() {
-						ctx.cancel() //立刻取消超时机制
+						ctx.cancel() //Cancel the timeout and notice exit the goroutine
 					}
 					delete(contextMap, id)
 				}
 				continue
 			}
-			if ctx, ok = contextMap[id]; !ok { //第一次request
+			if ctx, ok = contextMap[id]; !ok { //the first request, so the write can be triggered
 				allow = true
 			} else {
-				allow = !ctx.isActive() //说明此时空闲
+				allow = !ctx.isActive() //at this time, it is idle and can trigger write
 			}
-		case id = <-d.nextReadyC: //此时说明已经完成上一次请求或者已经超时
+		case id = <-d.nextReadyC: //the timeout mechanism or a correct return has been triggered
 			if ctx, ok = contextMap[id]; ok && ctx.isActive() {
 				ctx.cancel()
 				contextMap[id] = timeoutContext{}
 			}
-			if q, ok = d.requestQueueMap.GetQueue(id); ok {
+			if q, ok = d.requestQueueMap.getQueue(id); ok {
 				allow = true
 			}
-		case timeOutFlag := <-d.timeoutC: //id已经超时，需要删除
+		case timeOutFlag := <-d.timeoutC: //timeout trigger
 			pendingReq, ok := d.callStateMap.getPendingRequest(timeOutFlag.uniqueid)
 			if !ok {
 				continue
@@ -232,7 +232,7 @@ type timeoutFlag struct {
 }
 
 func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) {
-	q, ok := d.requestQueueMap.GetQueue(id)
+	q, ok := d.requestQueueMap.getQueue(id)
 	if !ok {
 		log.Errorf("get queue error, conn may be close, id(%v)", id)
 		return
@@ -295,7 +295,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 
 func (d *dispatcher) requestDone(id string, uniqueid string) {
 	var q Queue
-	q, ok := d.requestQueueMap.GetQueue(id)
+	q, ok := d.requestQueueMap.getQueue(id)
 	if !ok {
 		log.Errorf("get queue error, conn may be close, id(%v), uniqueid(%v)", id, uniqueid)
 		return

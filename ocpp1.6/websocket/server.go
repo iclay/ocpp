@@ -29,8 +29,8 @@ type Server struct {
 }
 
 func (s *Server) clientOnConnect(id string, ws *wsconn) {
-	s.dispatcher.callStateMap.CreateNewRequest(id)
-	s.dispatcher.requestQueueMap.CreateNewQueue(id)
+	s.dispatcher.callStateMap.createNewRequest(id)
+	s.dispatcher.requestQueueMap.createNewQueue(id)
 	s.registerConn(id, ws)
 }
 func (s *Server) clientOnDisconnect(id string) {
@@ -106,7 +106,7 @@ func (s *Server) requestDone(id string, uniqueid string) {
 	s.dispatcher.callStateMap.requestDone(id, uniqueid)
 }
 func (s *Server) deleteDispatcherQueue(id string) {
-	s.dispatcher.requestQueueMap.DeleteQueue(id)
+	s.dispatcher.requestQueueMap.deleteQueue(id)
 }
 
 func (s *Server) wsHandler(c *gin.Context) {
