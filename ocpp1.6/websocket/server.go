@@ -19,20 +19,24 @@ type HandleFuncs interface {
 }
 
 type Server struct {
-	ginServer  *gin.Engine
-	upgrader   websocket.Upgrader
-	wsconns    *wsconns
-	validate   *validator.Validate
-	ocpp16map  *proto.OCPP16Map
-	dispatcher *dispatcher
-	// clientOnConnect    func(id string)
-	ocppHandlerMap     map[string]proto.RequestHandler
-	clientOnDisconnect func(id string)
+	ginServer      *gin.Engine
+	upgrader       websocket.Upgrader
+	wsconns        *wsconns
+	validate       *validator.Validate
+	ocpp16map      *proto.OCPP16Map
+	dispatcher     *dispatcher
+	ocppHandlerMap map[string]proto.RequestHandler
 }
 
-func (s *Server) clientOnConnect(id string) {
+func (s *Server) clientOnConnect(id string, ws *wsconn) {
 	s.dispatcher.callStateMap.CreateNewRequest(id)
 	s.dispatcher.requestQueueMap.CreateNewQueue(id)
+	s.registerConn(id, ws)
+}
+func (s *Server) clientOnDisconnect(id string) {
+	s.deleteConn(id)
+	s.deleteDispatcherQueue(id)
+	s.deleteDispatcherCallState(id)
 }
 
 func (s *Server) RegisterOCPPHandler(ocppHandlers HandleFuncs) {
@@ -137,13 +141,15 @@ func (s *Server) wsHandler(c *gin.Context) {
 		return
 	}
 	ws := &wsconn{
-		server: s,
-		conn:   conn,
-		id:     p.String(),
-		ping:   make(chan []byte),
-		closeW: make(chan error),
+		server:  s,
+		conn:    conn,
+		id:      p.String(),
+		timeOut: time.Second * 5,
+		ping:    make(chan []byte),
+		writeC:  make(chan []byte, 10),
+		closeC:  make(chan error),
 	}
-	s.registerConn(p.String(), ws)
+	s.clientOnConnect(ws.id, ws)
 	go ws.read()
 	go ws.write()
 }

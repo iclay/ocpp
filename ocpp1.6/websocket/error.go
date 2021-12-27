@@ -20,7 +20,7 @@ func (e *Error) Error() string {
 func occurenceConstraintViolation(fieldError validator.FieldError, action string) *Error {
 	return &Error{
 		ErrorCode:        proto.OccurenceConstraintViolation,
-		ErrorDescription: fmt.Sprintf("action:%v, field %s must required but not found,but it has been omitted", action, fieldError.Namespace()),
+		ErrorDescription: fmt.Sprintf("action:%v, field %s must required but it seems to have been omitted", action, fieldError.Namespace()),
 		ErrorDetails:     nil,
 	}
 }
@@ -32,12 +32,28 @@ func genericError(fieldErrors validator.ValidationErrors, action string) *Error 
 		ErrorDetails:     nil,
 	}
 }
-
-func propertyConstraintViolation(fieldError validator.FieldError, condition string, action string) *Error {
+func propertyConstraintViolationLen(fieldError validator.FieldError, condition string, action string) *Error {
+	return &Error{
+		ErrorCode:        proto.PropertyConstraintViolation,
+		ErrorDescription: fmt.Sprintf("action:%v, field %s len must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
+		ErrorDetails:     nil,
+	}
+}
+func propertyConstraintViolationCmp(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
 		ErrorCode:        proto.PropertyConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %s must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
 		ErrorDetails:     nil,
+	}
+}
+func escape(s string) string {
+	switch s {
+	case "min":
+		return ">="
+	case "max":
+		return "<="
+	default:
+		return s
 	}
 }
 
@@ -46,8 +62,10 @@ func checkValidatorError(err error, action string) *Error {
 	if validatorErrors, ok := err.(validator.ValidationErrors); ok {
 		for _, validatorError := range validatorErrors {
 			switch validatorError.ActualTag() {
-			case "lt", "gt", "lte", "gte", "min", "max", "eq", "ne":
-				return propertyConstraintViolation(validatorError, validatorError.ActualTag(), action)
+			case "min", "max":
+				return propertyConstraintViolationLen(validatorError, escape(validatorError.ActualTag()), action)
+			case "lt", "gt", "lte", "gte", "eq", "ne":
+				return propertyConstraintViolationCmp(validatorError, validatorError.ActualTag(), action)
 			case "required":
 				return occurenceConstraintViolation(validatorError, action)
 			default:

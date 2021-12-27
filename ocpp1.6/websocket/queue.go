@@ -1,9 +1,6 @@
 package websocket
 
-import (
-	"container/list"
-	"sync"
-)
+import "sync"
 
 type Queue interface {
 	Push(v interface{})
@@ -13,53 +10,80 @@ type Queue interface {
 	IsEmpty() bool
 }
 
+//minqueenlen must be power of 2   x % n == x & (n - 1)
+const minQueueLen = 2 << 4
+
 type requestQueue struct {
-	data *list.List
-	mut  *sync.RWMutex
+	buf               []interface{}
+	head, tail, count int
+	sync.RWMutex
 }
 
 func NewQueue() *requestQueue {
-	return &requestQueue{data: list.New(), mut: new(sync.RWMutex)}
-}
-
-func (q *requestQueue) Push(v interface{}) {
-	defer q.mut.Unlock()
-	q.mut.Lock()
-	q.data.PushFront(v)
-}
-
-func (q *requestQueue) Pop() (interface{}, bool) {
-	defer q.mut.Unlock()
-	q.mut.Lock()
-	if q.data.Len() > 0 {
-		iter := q.data.Back()
-		v := iter.Value
-		q.data.Remove(iter)
-		return v, true
+	return &requestQueue{
+		buf: make([]interface{}, minQueueLen),
 	}
-	return nil, false
-}
-
-func (q *requestQueue) Peek() (interface{}, bool) {
-	defer q.mut.Unlock()
-	q.mut.Lock()
-	if q.data.Len() > 0 {
-		iter := q.data.Back()
-		v := iter.Value
-		q.data.Remove(iter)
-		return v, true
-	}
-	return nil, false
 }
 
 func (q *requestQueue) Len() int {
-	defer q.mut.RUnlock()
-	q.mut.RLock()
-	return q.data.Len()
+	q.RLock()
+	defer q.RUnlock()
+	return q.count
 }
 
 func (q *requestQueue) IsEmpty() bool {
-	defer q.mut.RUnlock()
-	q.mut.RLock()
-	return !(q.data.Len() > 0)
+	q.RLock()
+	defer q.RUnlock()
+	return q.count == 0
+}
+
+func (q *requestQueue) resize() {
+	newBuf := make([]interface{}, q.count<<1)
+
+	if q.tail > q.head {
+		copy(newBuf, q.buf[q.head:q.tail])
+	} else {
+		n := copy(newBuf, q.buf[q.head:])
+		copy(newBuf[n:], q.buf[:q.tail])
+	}
+
+	q.head = 0
+	q.tail = q.count
+	q.buf = newBuf
+}
+
+func (q *requestQueue) Push(elem interface{}) {
+	q.Lock()
+	defer q.Unlock()
+	if q.count == len(q.buf) {
+		q.resize()
+	}
+	q.buf[q.tail] = elem
+	q.tail = (q.tail + 1) & (len(q.buf) - 1)
+	q.count++
+}
+
+func (q *requestQueue) Peek() (interface{}, bool) {
+	q.RLock()
+	defer q.RUnlock()
+	if q.count <= 0 {
+		return nil, false
+	}
+	return q.buf[q.head], true
+}
+
+func (q *requestQueue) Pop() (interface{}, bool) {
+	q.Lock()
+	defer q.Unlock()
+	if q.count <= 0 {
+		return nil, false
+	}
+	ret := q.buf[q.head]
+	q.buf[q.head] = nil
+	q.head = (q.head + 1) & (len(q.buf) - 1)
+	q.count--
+	if len(q.buf) > minQueueLen && (q.count<<2) == len(q.buf) {
+		q.resize()
+	}
+	return ret, true
 }

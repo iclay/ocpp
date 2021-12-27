@@ -14,12 +14,14 @@ import (
 )
 
 type wsconn struct {
-	server *Server
-	conn   *websocket.Conn
-	id     string
-	ping   chan []byte
-	closeW chan error
-	closed bool
+	server  *Server
+	conn    *websocket.Conn
+	id      string
+	timeOut time.Duration
+	ping    chan []byte
+	writeC  chan []byte
+	closeC  chan error
+	closed  bool
 	sync.Mutex
 }
 
@@ -52,35 +54,31 @@ func (ws *wsconns) connExists(id string) bool {
 	return ok
 }
 
-func (ws *wsconn) stop() {
-	ws.server.deleteConn(ws.id)
-	ws.server.deleteDispatcherQueue(ws.id)
-	ws.server.deleteDispatcherCallState(ws.id)
+func (ws *wsconn) stop(err error) {
+	ws.server.clientOnDisconnect(ws.id)
+	ws.closeC <- err
 	ws.closed = true
 	ws.conn.Close()
-	ws.conn = nil
 }
 
 func (ws *wsconn) read() {
 	conn := ws.conn
-	readTimeOut := time.Second * 10
-	_ = ws.setReadDeadTimeout(readTimeOut) //设置读超时，如果超时，则会返回读失败
+	_ = ws.setReadDeadTimeout(ws.timeOut)
 	conn.SetPingHandler(func(appData string) error {
 		ws.ping <- []byte(appData)
-		return ws.setReadDeadTimeout(readTimeOut) //如果收到心跳包，重新设置读超时
+		return ws.setReadDeadTimeout(ws.timeOut)
 	})
 	for {
 		typ, message, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("readmessage error, chagerfun:(%v), err:(%v)\n", ws.id, err)
+			log.Errorf("readmessage error, chagerfun:(%v), err:(%v)\n", ws.id, err)
 			ws.Lock()
-			ws.stop()
+			ws.stop(err)
 			ws.Unlock()
 			return
 		}
-		fmt.Println("message=", string(message))
-		_ = ws.setReadDeadTimeout(readTimeOut)
-		fmt.Printf("readMessage: chargegun:(%v) send:(%v), messagetype:(%v)\n", ws.id, string(message), typ)
+		log.Debugf("readMessage: chargegun:(%v) send:(%v), messagetype:(%v)\n", ws.id, string(message), typ)
+		_ = ws.setReadDeadTimeout(ws.timeOut)
 		go ws.messageHandler(message)
 	}
 }
@@ -94,7 +92,7 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 		}
 		err = ws.server.validate.Struct(res)
 		if err != nil {
-			log.Errorf("res invalid, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
+			log.Errorf("response invalid, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
 		callResult := &proto.CallResult{
@@ -107,7 +105,11 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 			log.Errorf("marshal result error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
-		ws.writeMessage(websocket.TextMessage, result)
+		err = ws.writeMessage(websocket.TextMessage, result)
+		if err != nil {
+			log.Errorf("write message error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
+			return
+		}
 	}
 	log.Errorf("not support action:(%v) current, id:(%v), uniqueid:(%v)", action, ws.id, uniqueid)
 }
@@ -119,21 +121,23 @@ func (ws *wsconn) setReadDeadTimeout(readTimeout time.Duration) error {
 }
 
 func (ws *wsconn) setWriteDeadTimeout(readTimeout time.Duration) error {
-	ws.Lock()
-	defer ws.Unlock()
+	//this function is always accompanied by writemessage, so there is no need to lock it
 	return ws.conn.SetWriteDeadline(time.Now().Add(readTimeout))
 }
 
-func (ws *wsconn) writeMessage(messageType int, data []byte) {
-	_ = ws.setWriteDeadTimeout(time.Second * 10)
+func (ws *wsconn) writeMessage(messageType int, data []byte) error {
 	ws.Lock()
 	defer ws.Unlock()
-	if !ws.closed {
-		if err := ws.conn.WriteMessage(messageType, data); err != nil {
-			ws.stop()
-		}
+	if ws.closed {
+		return fmt.Errorf("conn has closed down, id(%v)", ws.id)
 	}
-	return
+	_ = ws.setWriteDeadTimeout(ws.timeOut)
+	err := ws.conn.WriteMessage(messageType, data)
+	if err != nil {
+		ws.stop(err)
+	}
+	return err
+
 }
 
 func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
@@ -152,8 +156,7 @@ func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
 	if err != nil {
 		return err
 	}
-	ws.writeMessage(websocket.TextMessage, callErrorMsg)
-	return nil
+	return ws.writeMessage(websocket.TextMessage, callErrorMsg)
 }
 
 func parseMessage(wsmsg []byte) ([]interface{}, error) {
@@ -183,9 +186,9 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		}
 		return
 	}
-	action, ok := fields[2].(string) //must be string
+	action, ok := fields[2].(string)
 	if !ok {
-		log.Errorf("invalid call action(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(CALL)", fields[2], ws.id, string(wsmsg), Call)
+		log.Errorf("invalid call action(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(%v)", fields[2], ws.id, string(wsmsg), Call)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid call action(%v) type,must be string", fields[2]),
@@ -339,7 +342,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 	}
 	errCode, ok := fields[2].(string) //must be string
 	if !ok {
-		log.Errorf("invalid CallError ErrCode(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(CALL)", fields[2], ws.id, string(wsmsg), CallError)
+		log.Errorf("invalid CallError ErrCode(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(%v)", fields[2], ws.id, string(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid CallError errCode(%v) type,must be string", fields[2]),
@@ -350,7 +353,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 	}
 	errorDescription, ok := fields[2].(string)
 	if !ok {
-		log.Errorf("invalid CallError errorDescription(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(CALL)", fields[2], ws.id, string(wsmsg), CallError)
+		log.Errorf("invalid CallError errorDescription(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(%v)", fields[2], ws.id, string(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid CallError errorDescription(%v) type,must be string", fields[2]),
@@ -385,7 +388,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 func (ws *wsconn) messageHandler(wsmsg []byte) {
 	fields, err := parseMessage(wsmsg)
 	if err != nil {
-		log.Errorf("parse wsmessage error, err=%v, id(%v), wsmsg(%v)", err, ws.id, string(wsmsg))
+		log.Errorf("parse wsmessage error, id(%v), wsmsg(%v), err(%v)", ws.id, string(wsmsg), err)
 		return
 	}
 	if len(fields) < 3 {
@@ -417,5 +420,13 @@ func (ws *wsconn) messageHandler(wsmsg []byte) {
 }
 
 func (ws *wsconn) write() {
-
+	for {
+		select {
+		case ping := <-ws.ping:
+			ws.writeMessage(websocket.PongMessage, ping)
+		case closeError := <-ws.closeC:
+			log.Errorf("id(%v) closed, err(%v)", ws.id, closeError)
+			return
+		}
+	}
 }
