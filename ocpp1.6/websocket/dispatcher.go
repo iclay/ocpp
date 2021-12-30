@@ -25,6 +25,10 @@ type (
 	}
 )
 
+func (r *request) String() string {
+	return fmt.Sprintf("{call: %+v, reqTime: %v}", r.call, r.reqTime)
+}
+
 func newCallStateMap() *callStateMap {
 	return &callStateMap{
 		pendingCallState: make(map[string]*request),
@@ -39,10 +43,10 @@ func (m *callStateMap) createNewRequest(id string) {
 	}
 }
 
-func (m *callStateMap) getPendingRequest(uniqueid string) (*request, bool) {
+func (m *callStateMap) getPendingRequest(id string) (*request, bool) {
 	m.Lock()
 	defer m.Unlock()
-	req, ok := m.pendingCallState[uniqueid]
+	req, ok := m.pendingCallState[id]
 	return req, ok
 }
 
@@ -66,13 +70,10 @@ func (m *callStateMap) AddRequest(id string, request *request) error {
 func (m *callStateMap) requestDone(id string, uniqueid string) {
 	m.Lock()
 	defer m.Unlock()
-	if req, ok := m.pendingCallState[id]; ok {
-		if req.call.QueryUniqueID() == uniqueid {
-			m.pendingCallState[id] = &request{
-				call: &proto.Call{},
-			}
+	if req, ok := m.pendingCallState[id]; ok && req.call.QueryUniqueID() == uniqueid {
+		m.pendingCallState[id] = &request{
+			call: &proto.Call{},
 		}
-
 	}
 }
 
@@ -142,7 +143,7 @@ func NewDefaultDispatcher(s *Server) (d *dispatcher) {
 		callStateMap:    newCallStateMap(),
 		requestQueueMap: newRequesQueueMap(),
 		requestC:        make(chan string, 10),
-		nextReadyC:      make(chan string),
+		nextReadyC:      make(chan string, 10),
 		timeout:         time.Second * 5,
 		timeoutC:        make(chan timeoutFlag),
 		stopC:           make(chan error),
@@ -209,11 +210,7 @@ func (d *dispatcher) run() {
 				allow = true
 			}
 		case timeOutFlag := <-d.timeoutC: //timeout trigger
-			pendingReq, ok := d.callStateMap.getPendingRequest(timeOutFlag.uniqueid)
-			if !ok {
-				continue
-			}
-			if ctx, ok = contextMap[id]; ok && ctx.isActive() && timeOutFlag.uniqueid == pendingReq.call.QueryUniqueID() {
+			if ctx, ok = contextMap[id]; ok && ctx.isActive() && timeOutFlag.uniqueid == ctx.uniqueid {
 				ctx.cancel()
 				d.requestDone(id, ctx.uniqueid)
 				contextMap[id] = timeoutContext{}
@@ -313,7 +310,7 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 	}
 	requestQueue.Pop()
 	d.callStateMap.requestDone(id, uniqueid)
-	log.Debug("request has already complete, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
+	// log.Debug("request has already complete, id(%v), uniqueid(%v), request(%v)", id, uniqueid, request)
 	d.nextReadyC <- id
 }
 

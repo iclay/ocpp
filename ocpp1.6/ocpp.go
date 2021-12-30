@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"ocpp16/plugin/rpcx"
+	// "ocpp16/plugin/rpcx"
+	"ocpp16/plugin/local"
 	"ocpp16/websocket"
 	"os"
 
@@ -49,10 +50,18 @@ func main() {
 	}
 }
 
+// func serve(c *cli.Context) error {
+// 	server := websocket.NewDefaultServer()
+// 	client := rpcx.NewRPCXClient([]string{}, "")
+// 	server.RegisterOCPPHandler(client)
+// 	server.Serve("127.0.0.1:8090", "/ocpp/:name/:id")
+// 	return nil
+// }
+
 func serve(c *cli.Context) error {
 	server := websocket.NewDefaultServer()
-	client := rpcx.NewRPCXClient([]string{}, "")
-	server.RegisterOCPPHandler(client)
+	plugin := local.NewLocalService()
+	server.RegisterOCPPHandler(plugin)
 	server.Serve("127.0.0.1:8090", "/ocpp/:name/:id")
 	return nil
 }

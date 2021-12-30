@@ -1349,7 +1349,7 @@ func Test_SetChargingProfileResponse(t *testing.T) {
 }
 
 func testOcppSuccess(t *testing.T) {
-	if ocpptrait, ok := OCPP16M.GetActionTrait("BootNotification"); !ok {
+	if ocpptrait, ok := OCPP16M.GetTraitAction("BootNotification"); !ok {
 		return
 	} else {
 		reqType := ocpptrait.RequestType() //根据type构造实例， 调用对应的方法
@@ -1374,7 +1374,7 @@ func testOcppSuccess(t *testing.T) {
 }
 
 func testOcppFail(t *testing.T) {
-	if ocpptrait, ok := OCPP16M.GetActionTrait("BootNotification"); !ok {
+	if ocpptrait, ok := OCPP16M.GetTraitAction("BootNotification"); !ok {
 		t.Log(ocpptrait)
 		t.Log("not support")
 		return
@@ -1420,7 +1420,7 @@ func Test_OccpCall(t *testing.T) {
 		UniqueID:      "uniqueid",
 		Action:        "Authorize",
 		// Request:       json.RawMessage(`{"chargePointVendor": "VendorX", "chargePointModel": "SingleSocketCharger"}`),
-		Request: json.RawMessage(`{"chargePointVendsddddddddddddsdsdsdsdsdsdor": "VendorX", "chargePointModel": "SingleSocketCharger"}`),
+		//Request: json.RawMessage(`{"chargePointVendsddddddddddddsdsdsdsdsdsdor": "VendorX", "chargePointModel": "SingleSocketCharger"}`),
 	}
 	call_byte, err := call.MarshalJSON()
 	if err != nil {
@@ -1433,7 +1433,7 @@ func Test_OccpCall(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if ocpptrait, ok := OCPP16M.GetActionTrait("BootNotification"); !ok {
+	if ocpptrait, ok := OCPP16M.GetTraitAction("BootNotification"); !ok {
 		return
 	} else {
 		reqType := ocpptrait.RequestType() //根据type构造实例， 调用对应的方法

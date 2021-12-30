@@ -10,7 +10,7 @@ type Queue interface {
 	IsEmpty() bool
 }
 
-//minqueenlen must be power of 2   x % n == x & (n - 1)
+//minQueueLen must be power of 2   x % n == x & (n - 1)
 const minQueueLen = 2 << 4
 
 type requestQueue struct {

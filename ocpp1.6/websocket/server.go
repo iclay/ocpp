@@ -12,8 +12,6 @@ import (
 	validator "github.com/go-playground/validator/v10"
 )
 
-// type requestHandler func(string, string, proto.Request) proto.Response
-
 type HandleFuncs interface {
 	RegisterOCPPHandler() map[string]proto.RequestHandler
 }
@@ -49,9 +47,7 @@ var defaultServer = func() *Server {
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
-		wsconns: &wsconns{
-			wsmap: make(map[string]*wsconn),
-		},
+		wsconns:        newWsconns(),
 		validate:       proto.Validate,
 		ocpp16map:      proto.OCPP16M,
 		ocppHandlerMap: make(map[string]proto.RequestHandler),
@@ -69,8 +65,8 @@ func (s *Server) SetDefaultDispatcher(d *dispatcher) {
 }
 
 type ChargerPoint struct {
-	Name string `uri:"id" binding:"required,uuid"` //充电中心名称
-	ID   string `uri:"name" binding:"required"`    //充电枪ID
+	Name string `uri:"name" binding:"required,uuid"` //充电中心名称
+	ID   string `uri:"id" binding:"required"`        //充电枪ID
 }
 
 func (c *ChargerPoint) String() string {
@@ -103,7 +99,7 @@ func (s *Server) getPendingRequest(uniqueid string) (*request, bool) {
 	return s.dispatcher.callStateMap.getPendingRequest(uniqueid)
 }
 func (s *Server) requestDone(id string, uniqueid string) {
-	s.dispatcher.callStateMap.requestDone(id, uniqueid)
+	s.dispatcher.requestDone(id, uniqueid)
 }
 func (s *Server) deleteDispatcherQueue(id string) {
 	s.dispatcher.requestQueueMap.deleteQueue(id)
@@ -134,9 +130,10 @@ func (s *Server) wsHandler(c *gin.Context) {
 	// 	conn.Close()
 	// 	return
 	// }
-	if !s.connExists(p.String()) { /*该情况可能出现在充电桩已经断线，但是云端心跳机制没来及反应，充电桩在一次发起连接需要等待云端触发心跳机制给上一次连接关闭*/
-		conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
-			fmt.Sprintf("chargegun(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second) /**时间需要写到配置参数中*/)
+	if s.connExists(p.String()) { /*该情况可能出现在充电桩已经断线，但是云端心跳机制没来及反应，充电桩在一次发起连接需要等待云端触发心跳机制给上一次连接关闭*/
+		conn.WriteControl(websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseProtocolError,
+				fmt.Sprintf("chargegun(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second) /**时间需要写到配置参数中*/)
 		conn.Close()
 		return
 	}
@@ -144,9 +141,8 @@ func (s *Server) wsHandler(c *gin.Context) {
 		server:  s,
 		conn:    conn,
 		id:      p.String(),
-		timeOut: time.Second * 5,
+		timeOut: time.Second * 20,
 		ping:    make(chan []byte),
-		writeC:  make(chan []byte, 10),
 		closeC:  make(chan error),
 	}
 	s.clientOnConnect(ws.id, ws)
