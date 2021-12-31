@@ -20,7 +20,7 @@ func (e *Error) Error() string {
 func occurenceConstraintViolation(fieldError validator.FieldError, action string) *Error {
 	return &Error{
 		ErrorCode:        proto.OccurenceConstraintViolation,
-		ErrorDescription: fmt.Sprintf("action:%v, field %s must required but it seems to have been omitted", action, fieldError.Namespace()),
+		ErrorDescription: fmt.Sprintf("action:%v, field %v must required but it seems to have been omitted", action, fieldError.Namespace()),
 		ErrorDetails:     nil,
 	}
 }
@@ -35,23 +35,23 @@ func genericError(fieldErrors validator.ValidationErrors, action string) *Error 
 func propertyConstraintViolationLen(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
 		ErrorCode:        proto.PropertyConstraintViolation,
-		ErrorDescription: fmt.Sprintf("action:%v, field %s len must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
+		ErrorDescription: fmt.Sprintf("action:%v, field %v len must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
 		ErrorDetails:     nil,
 	}
 }
 func propertyConstraintViolationCmp(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
 		ErrorCode:        proto.PropertyConstraintViolation,
-		ErrorDescription: fmt.Sprintf("action:%v, field %s must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
+		ErrorDescription: fmt.Sprintf("action:%v, field %v must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
 		ErrorDetails:     nil,
 	}
 }
 func escape(s string) string {
 	switch s {
 	case "min":
-		return ">="
+		return "more than"
 	case "max":
-		return "<="
+		return "less than"
 	default:
 		return s
 	}

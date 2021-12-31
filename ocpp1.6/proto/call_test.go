@@ -83,7 +83,7 @@ func testCall(call *Call, t *testing.T) {
 	}
 }
 
-func Test_Call(t *testing.T) {
+func TestCall(t *testing.T) {
 	// testCall(callSuccess(), t)
 	//testCall(callFaildDueMessageTypeID(), t)
 	//testCall(callFaildDueUniqueID(), t)//error
@@ -132,7 +132,7 @@ func testCallResult(call *CallResult, t *testing.T) {
 	}
 }
 
-func Test_CallResult(t *testing.T) {
+func TestCallResult(t *testing.T) {
 	testCallResult(callResultSuccess(), t)
 	//testCallResult(callResultFaildDueMessageTypeID(), t) //error
 	//testCallResult(callResultFaildDueUniqueID(), t) //error
@@ -192,7 +192,7 @@ func testCallError(call *CallError, t *testing.T) {
 	}
 }
 
-func Test_CallErrorResult(t *testing.T) {
+func TestCallErrorResult(t *testing.T) {
 	// testCallError(callErrorSuccess(), t)
 	//testCallError(callErrorFaildDueMessageTypeID(), t) //error
 	//testCallError(callErrorFaildDueUniqueID(), t) //error
@@ -248,7 +248,7 @@ func testBootNotificationRequest(call *BootNotificationRequest, t *testing.T) {
 	}
 }
 
-func Test_BootNotificationRequest(t *testing.T) {
+func TestBootNotificationRequest(t *testing.T) {
 	testBootNotificationRequest(BootNotificationRequestSuccess(), t)
 	//testBootNotificationRequest(BootNotificationRequestFail(), t) //error
 
@@ -290,7 +290,7 @@ func testBootNotificationResponse(call *BootNotificationResponse, t *testing.T) 
 	}
 }
 
-func Test_BootNotificationResponse(t *testing.T) {
+func TestBootNotificationResponse(t *testing.T) {
 	testBootNotificationResponse(BootNotificationResponseSuccess(), t)
 	// testBootNotificationResponse(BootNotificationResponseFail(), t) //error
 
@@ -344,7 +344,7 @@ func testStatusNotificationRequest(call *StatusNotificationRequest, t *testing.T
 	}
 }
 
-func Test_StatusNotificationRequest(t *testing.T) {
+func TestStatusNotificationRequest(t *testing.T) {
 	testStatusNotificationRequest(StatusNotificationRequestSuccess(), t)
 	//testStatusNotificationRequest(StatusNotificationRequestFail(), t) //error
 }
@@ -423,7 +423,7 @@ func testMeterValueRequest(call *MeterValuesRequest, t *testing.T) {
 		t.Error(err)
 	}
 }
-func Test_MeterValueRequest(t *testing.T) {
+func TestMeterValueRequest(t *testing.T) {
 	testMeterValueRequest(MeterValueRequestSuccess(), t)
 	//testMeterValueRequest(MeterValueRequestFail(), t)
 	//testMeterValueRequest(MeterValueRequestFailEmptyMeterValue(), t)//测试metervalue为空的情况
@@ -464,7 +464,7 @@ func testStatusAuthorizeRequest(call *AuthorizeRequest, t *testing.T) {
 	}
 }
 
-func Test_AuthorizeRequest(t *testing.T) {
+func TestAuthorizeRequest(t *testing.T) {
 	testStatusAuthorizeRequest(AuthorizeRequestSuccess(), t)
 	// testStatusAuthorizeRequest(AuthorizeRequestFail(), t)//error
 }
@@ -509,7 +509,7 @@ func testStatusAuthorizeResponse(call *AuthorizeResponse, t *testing.T) {
 	}
 }
 
-func Test_AuthorizeResponse(t *testing.T) {
+func TestAuthorizeResponse(t *testing.T) {
 	testStatusAuthorizeResponse(AuthorizeResponseSuccess(), t)
 	//testStatusAuthorizeResponse(AuthorizeResponseFail(), t)//error
 }
@@ -556,7 +556,7 @@ func testStartTransactionRequest(call *StartTransactionRequest, t *testing.T) {
 	}
 }
 
-func Test_StartTransactionRequest(t *testing.T) {
+func TestStartTransactionRequest(t *testing.T) {
 	testStartTransactionRequest(StartTransactionRequestSuccess(), t)
 	//testStartTransactionRequest(StartTransactionRequestFail(), t)//error
 }
@@ -602,7 +602,7 @@ func testStartTransactionResponse(call *StartTransactionResponse, t *testing.T) 
 	}
 }
 
-func Test_StartTransactionResponse(t *testing.T) {
+func TestStartTransactionResponse(t *testing.T) {
 	testStartTransactionResponse(StartTransactionResponseSuccess(), t)
 	// testStartTransactionResponse(StartTransactionResponseFail(), t) //error
 }
@@ -680,7 +680,7 @@ func testStopTransactionRequest(call *StopTransactionRequest, t *testing.T) {
 	}
 }
 
-func Test_StopTransactionRequest(t *testing.T) {
+func TestStopTransactionRequest(t *testing.T) {
 	testStopTransactionRequest(StopTransactionRequestSuccess(), t)
 	//testStopTransactionRequest(StopTransactionRequestFail(), t)//error
 }
@@ -725,7 +725,7 @@ func testStopTransactionResponse(call *StopTransactionResponse, t *testing.T) {
 	}
 }
 
-func Test_StopTransactionResponse(t *testing.T) {
+func TestStopTransactionResponse(t *testing.T) {
 	testStopTransactionResponse(StopTransactionResponseSuccess(), t)
 	// testStopTransactionResponse(StopTransactionResponseFail(), t) //error
 }
@@ -765,7 +765,7 @@ func testChangeConfigurationRequest(call *ChangeConfigurationRequest, t *testing
 	}
 }
 
-func Test_ChangeConfigurationRequest(t *testing.T) {
+func TestChangeConfigurationRequest(t *testing.T) {
 	testChangeConfigurationRequest(ChangeConfigurationRequestSuccess(), t)
 	// testChangeConfigurationRequest(ChangeConfigurationRequestFail(), t)//error
 }
@@ -802,7 +802,7 @@ func testChangeConfigurationResponse(call *ChangeConfigurationResponse, t *testi
 	}
 }
 
-func Test_changeConfigurationResponse(t *testing.T) {
+func TestchangeConfigurationResponse(t *testing.T) {
 	// testChangeConfigurationResponse(ChangeConfigurationResponseSuccess(), t)
 	// testChangeConfigurationResponse(ChangeConfigurationResponseFail(), t) //error
 }
@@ -843,7 +843,7 @@ func testDataTransferRequest(call *DataTransferRequest, t *testing.T) {
 	}
 }
 
-func Test_DataTransferRequest(t *testing.T) {
+func TestDataTransferRequest(t *testing.T) {
 	testDataTransferRequest(DataTransferRequestSuccess(), t)
 	// testDataTransferRequest(DataTransferRequestFail(), t)//error
 }
@@ -882,7 +882,7 @@ func testDataTransferResponse(call *DataTransferResponse, t *testing.T) {
 	}
 }
 
-func Test_DataTransferResponse(t *testing.T) {
+func TestDataTransferResponse(t *testing.T) {
 	testDataTransferResponse(DataTransferResponseSuccess(), t)
 	// testDataTransferResponse(DataTransferResponseFail(), t) //error
 }
@@ -967,7 +967,7 @@ func testRemoteStartTransactionRequest(call *RemoteStartTransactionRequest, t *t
 	}
 }
 
-func Test_RemoteStartTransactionRequest(t *testing.T) {
+func TestRemoteStartTransactionRequest(t *testing.T) {
 	testRemoteStartTransactionRequest(RemoteStartTransactionRequestSuccess(), t)
 	// testRemoteStartTransactionRequest(RemoteStartTransactionRequestFail(), t)//error
 }
@@ -1004,7 +1004,7 @@ func testRemoteStartTransactionResponse(call *RemoteStartTransactionResponse, t 
 	}
 }
 
-func Test_RemoteStartTransactionResponse(t *testing.T) {
+func TestRemoteStartTransactionResponse(t *testing.T) {
 	testRemoteStartTransactionResponse(RemoteStartTransactionrResponseSuccess(), t)
 	// testRemoteStartTransactionResponse(RemoteStartTransactionResponseFail(), t) //error
 }
@@ -1039,7 +1039,7 @@ func testRemoteStopTransactionRequest(call *RemoteStopTransactionRequest, t *tes
 	}
 }
 
-func Test_RemoteStopTransactionRequest(t *testing.T) {
+func TestRemoteStopTransactionRequest(t *testing.T) {
 	testRemoteStopTransactionRequest(RemoteStopTransactionRequestSuccess(), t)
 	// testRemoteStopTransactionRequest(RemoteStopTransactionRequestFail(), t)//error
 }
@@ -1076,7 +1076,7 @@ func testRemoteStopTransactionResponse(call *RemoteStopTransactionResponse, t *t
 	}
 }
 
-func Test_RemoteStopTransactionResponse(t *testing.T) {
+func TestRemoteStopTransactionResponse(t *testing.T) {
 	testRemoteStopTransactionResponse(RemoteStopTransactionrResponseSuccess(), t)
 	// testRemoteStopTransactionResponse(RemoteStopTransactionResponseFail(), t) //error
 }
@@ -1113,7 +1113,7 @@ func testResetRequest(call *ResetRequest, t *testing.T) {
 	}
 }
 
-func Test_ResetRequest(t *testing.T) {
+func TestResetRequest(t *testing.T) {
 	testResetRequest(ResetRequestSuccess(), t)
 	// testResetRequest(ResetRequestFail(), t)//error
 }
@@ -1150,7 +1150,7 @@ func testResetResponse(call *ResetResponse, t *testing.T) {
 	}
 }
 
-func Test_ResetResponse(t *testing.T) {
+func TestResetResponse(t *testing.T) {
 	testResetResponse(ResetResponseSuccess(), t)
 	// testResetResponse(ResetResponseFail(), t) //error
 }
@@ -1187,7 +1187,7 @@ func testUnlockConnectorRequest(call *UnlockConnectorRequest, t *testing.T) {
 	}
 }
 
-func Test_UnlockConnectorRequest(t *testing.T) {
+func TestUnlockConnectorRequest(t *testing.T) {
 	testUnlockConnectorRequest(UnlockConnectorSuccess(), t)
 	// testUnlockConnectorRequest(UnlockConnectorFail(), t) //errors
 }
@@ -1224,7 +1224,7 @@ func testUnlockConnectorResponse(call *UnlockConnectorResponse, t *testing.T) {
 	}
 }
 
-func Test_UnlockConnectorResponse(t *testing.T) {
+func TestUnlockConnectorResponse(t *testing.T) {
 	testUnlockConnectorResponse(UnlockConnectorResponseSuccess(), t)
 	// testUnlockConnectorResponse(UnlockConnectorResponseFail(), t) //error
 }
@@ -1306,7 +1306,7 @@ func testSetChargingProfileRequest(call *SetChargingProfileRequest, t *testing.T
 	}
 }
 
-func Test_SetChargingProfileRequest(t *testing.T) {
+func TestSetChargingProfileRequest(t *testing.T) {
 	testSetChargingProfileRequest(SetChargingProfileSuccess(), t)
 	// testSetChargingProfileRequest(SetChargingProfileFail(), t)//error
 }
@@ -1343,7 +1343,7 @@ func testSetChargingProfileResponse(call *SetChargingProfileResponse, t *testing
 	}
 }
 
-func Test_SetChargingProfileResponse(t *testing.T) {
+func TestSetChargingProfileResponse(t *testing.T) {
 	testSetChargingProfileResponse(SetChargingProfileResponseSuccess(), t)
 	// testSetChargingProfileResponse(SetChargingProfileResponseFail(), t) //error
 }
@@ -1399,7 +1399,7 @@ func testOcppFail(t *testing.T) {
 	}
 }
 
-func Test_OccpTrait(t *testing.T) {
+func TestOccpTrait(t *testing.T) {
 	testOcppSuccess(t)
 	// testOcppFail(t)
 }
@@ -1413,7 +1413,7 @@ func parseMessage(wsmsg []byte) ([]interface{}, error) {
 	return fields, nil
 }
 
-func Test_OccpCall(t *testing.T) {
+func TestOccpCall(t *testing.T) {
 
 	call := &Call{
 		MessageTypeID: 2,

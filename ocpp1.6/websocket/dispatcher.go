@@ -59,7 +59,7 @@ func (m *callStateMap) deleteRequest(id string) {
 func (m *callStateMap) AddRequest(id string, request *request) error {
 	m.Lock()
 	defer m.Unlock()
-	if req, ok := m.pendingCallState[id]; ok && request.call.QueryUniqueID() != "" && req.call.QueryUniqueID() == "" {
+	if req, ok := m.pendingCallState[id]; ok && request.call.UID() != "" && req.call.UID() == "" {
 		m.pendingCallState[id] = request
 		return nil
 	} else {
@@ -70,7 +70,7 @@ func (m *callStateMap) AddRequest(id string, request *request) error {
 func (m *callStateMap) requestDone(id string, uniqueid string) {
 	m.Lock()
 	defer m.Unlock()
-	if req, ok := m.pendingCallState[id]; ok && req.call.QueryUniqueID() == uniqueid {
+	if req, ok := m.pendingCallState[id]; ok && req.call.UID() == uniqueid {
 		m.pendingCallState[id] = &request{
 			call: &proto.Call{},
 		}
@@ -242,7 +242,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 	request := req.(*request)
 	request.reqTime = time.Now().Format(time.RFC3339)
 	call := request.call
-	uniqueid := call.QueryUniqueID()
+	uniqueid := call.UID()
 	message, err := json.Marshal(call)
 	if err != nil {
 		log.Errorf("json Marshal error is error, id(%v),uniqueid(%v), request(%+v)", id, uniqueid, request)
@@ -304,8 +304,8 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 		return
 	}
 	request := req.(*request)
-	if request.call.QueryUniqueID() != uniqueid {
-		log.Errorf("requestid is not equal to uniqueid,maybe due to request timeout, id(%v), uniqueid(%v),latest request=(%+v)", id, uniqueid, request)
+	if request.call.UID() != uniqueid {
+		log.Errorf("requestid is not equal to uniqueid,maybe due to request timeout, id(%v), uniqueid(%v),latest request(%+v)", id, uniqueid, request)
 		return
 	}
 	requestQueue.Pop()
