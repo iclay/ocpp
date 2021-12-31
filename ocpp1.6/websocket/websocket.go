@@ -8,7 +8,8 @@ import (
 	"reflect"
 	"sync"
 	"time"
-
+	// "strings"
+	"bytes"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -115,6 +116,7 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 			log.Errorf("write message error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
+		return
 	}
 	log.Errorf("not support action:(%v) current, id:(%v), uniqueid:(%v)", action, ws.id, uniqueid)
 }
@@ -151,17 +153,17 @@ func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
 		UniqueID:         uniqueID,
 		ErrorCode:        e.ErrorCode,
 		ErrorDescription: e.ErrorDescription,
-		ErrorDetails:     e.ErrorDetails,
+		ErrorDetails:     nil,
 	}
 	err := ws.server.validate.Struct(callError)
 	if err != nil {
 		return err
 	}
-	callErrorMsg, err := json.Marshal(callError)
-	if err != nil {
-		return err
-	}
-	return ws.writeMessage(websocket.TextMessage, callErrorMsg)
+	bf := bytes.NewBuffer([]byte{})
+	jsonEncoder := json.NewEncoder(bf)
+	jsonEncoder.SetEscapeHTML(false)
+	jsonEncoder.Encode(callError)
+	return ws.writeMessage(websocket.TextMessage, bf.Bytes())
 }
 
 func parseMessage(wsmsg []byte) ([]interface{}, error) {
@@ -182,7 +184,7 @@ const (
 func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
 
 	if len(fields) != 4 {
-		log.Errorf("invalid num of call fields(%+v),exptect 4 fields, id(%v), wsmsg=(%v),wsmsg_type(%v)", fields, ws.id, string(wsmsg), Call)
+		log.Errorf("invalid num of call fields(%+v),exptect 4 fields, id(%v), wsmsg(%v),wsmsg_type(%v)", fields, ws.id, string(wsmsg), Call)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.FormationViolation,
 			ErrorDescription: fmt.Sprintf("invalid num of call fields(%+v),exptect 4 fields,uniqueid(%v)", fields, uniqueid),
@@ -224,7 +226,9 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 			}
 			return
 		}
-		req := reflect.New(reqType).Interface()
+		// req := reflect.New(reqType).Interface()
+		req := ws.server.get(reqType)
+		defer ws.server.put(reqType, req)
 		err = json.Unmarshal(reqByte, &req)
 		if err != nil {
 			log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
@@ -309,7 +313,9 @@ func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 			return
 		}
 
-		res := reflect.New(resType).Interface()
+		// res := reflect.New(resType).Interface()
+		res := ws.server.get(resType)
+		defer ws.server.put(resType, res)
 		err = json.Unmarshal(resByte, &res)
 		if err != nil {
 			log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)

@@ -36,8 +36,8 @@ const (
 
 type CallAbstract interface {
 	json.Marshaler
-	QueryMessageType() MessageType
-	QueryUniqueID() string
+	MessageType() MessageType
+	UID() string
 }
 
 //Call
@@ -48,19 +48,53 @@ type Call struct {
 	Request       Request     `json:"payload" validate:"required"`
 }
 
-func (c *Call) QueryMessageType() MessageType {
+func (c *Call) MessageType() MessageType {
 	return c.MessageTypeID
 }
 
-func (c *Call) QueryUniqueID() string {
+func (c *Call) UID() string {
 	return c.UniqueID
+}
+func (c *Call) String() string {
+	switch c.Request.(type) {
+	case BootNotificationRequest:
+		c.Request = c.Request.(BootNotificationRequest)
+	case HeartbeatRequest:
+		c.Request = c.Request.(HeartbeatRequest)
+	case StatusNotificationRequest:
+		c.Request = c.Request.(StatusNotificationRequest)
+	case MeterValuesRequest:
+		c.Request = c.Request.(MeterValuesRequest)
+	case AuthorizeRequest:
+		c.Request = c.Request.(AuthorizeRequest)
+	case StartTransactionRequest:
+		c.Request = c.Request.(StartTransactionRequest)
+	case StopTransactionRequest:
+		c.Request = c.Request.(StopTransactionRequest)
+	case ChangeConfigurationRequest:
+		c.Request = c.Request.(ChangeConfigurationRequest)
+	case DataTransferRequest:
+		c.Request = c.Request.(DataTransferRequest)
+	case SetChargingProfileRequest:
+		c.Request = c.Request.(SetChargingProfileRequest)
+	case RemoteStartTransactionRequest:
+		c.Request = c.Request.(RemoteStartTransactionRequest)
+	case RemoteStopTransactionRequest:
+		c.Request = c.Request.(RemoteStopTransactionRequest)
+	case ResetRequest:
+		c.Request = c.Request.(ResetRequest)
+	case UnlockConnectorRequest:
+		c.Request = c.Request.(UnlockConnectorRequest)
+	default:
+	}
+	callBytes, _ := json.Marshal(c)
+	return string(callBytes)
 }
 
 func (c *Call) MarshalJSON() ([]byte, error) {
 	fields := make([]interface{}, 4)
 	fields[0], fields[1], fields[2], fields[3] = int(c.MessageTypeID), c.UniqueID, c.Action, c.Request
 	return json.Marshal(fields)
-
 }
 
 //CallResult
@@ -70,12 +104,48 @@ type CallResult struct {
 	Response      Response    `json:"payload" validate:"required"`
 }
 
-func (cr *CallResult) QueryMessageType() MessageType {
+func (cr *CallResult) MessageType() MessageType {
 	return cr.MessageTypeID
 }
 
-func (cr *CallResult) QueryUniqueID() string {
+func (cr *CallResult) UID() string {
 	return cr.UniqueID
+}
+
+func (cr *CallResult) String() string {
+	switch cr.Response.(type) {
+	case BootNotificationResponse:
+		cr.Response = cr.Response.(BootNotificationResponse)
+	case HeartbeatResponse:
+		cr.Response = cr.Response.(HeartbeatResponse)
+	case StatusNotificationResponse:
+		cr.Response = cr.Response.(StatusNotificationResponse)
+	case MeterValuesResponse:
+		cr.Response = cr.Response.(MeterValuesResponse)
+	case AuthorizeResponse:
+		cr.Response = cr.Response.(AuthorizeResponse)
+	case StartTransactionResponse:
+		cr.Response = cr.Response.(StartTransactionResponse)
+	case StopTransactionResponse:
+		cr.Response = cr.Response.(StopTransactionResponse)
+	case ChangeConfigurationResponse:
+		cr.Response = cr.Response.(ChangeConfigurationResponse)
+	case DataTransferResponse:
+		cr.Response = cr.Response.(DataTransferResponse)
+	case SetChargingProfileResponse:
+		cr.Response = cr.Response.(SetChargingProfileResponse)
+	case RemoteStartTransactionResponse:
+		cr.Response = cr.Response.(RemoteStartTransactionResponse)
+	case RemoteStopTransactionResponse:
+		cr.Response = cr.Response.(RemoteStopTransactionResponse)
+	case ResetResponse:
+		cr.Response = cr.Response.(ResetResponse)
+	case UnlockConnectorResponse:
+		cr.Response = cr.Response.(UnlockConnectorResponse)
+	default:
+	}
+	callResBytes, _ := json.Marshal(cr)
+	return string(callResBytes)
 }
 
 func (cr *CallResult) MarshalJSON() ([]byte, error) {
@@ -107,12 +177,20 @@ type CallError struct {
 	ErrorDetails     interface{} `json:"errorDetails" validate:"omitempty"`
 }
 
-func (ce *CallError) QueryMessageType() MessageType {
+func (ce *CallError) MessageType() MessageType {
 	return ce.MessageTypeID
 }
 
-func (ce *CallError) QueryUniqueID() string {
+func (ce *CallError) UID() string {
 	return ce.UniqueID
+}
+
+func (ce *CallError) String() string {
+	switch ce.ErrorDetails.(type) {
+	default:
+	}
+	callErrBytes, _ := json.Marshal(ce)
+	return string(callErrBytes)
 }
 
 func (ce *CallError) MarshalJSON() ([]byte, error) {
@@ -189,11 +267,18 @@ func (BootNotificationResponse) Action() string {
 }
 
 //HeartBeat
-type HeartbeatRequest struct {
+type HeartbeatRequest struct{}
+
+func (HeartbeatRequest) Action() string {
+	return HeartbeatName
 }
 
 type HeartbeatResponse struct {
 	CurrentTime string `json:"currentTime" validate:"required"`
+}
+
+func (HeartbeatResponse) Action() string {
+	return HeartbeatName
 }
 
 //StatusNotification
@@ -267,7 +352,14 @@ type StatusNotificationRequest struct {
 	VendorErrorCode string               `json:"vendorErrorCode,omitempty" validate:"max=50"`
 }
 
-type StatusNotificationResponse struct {
+func (StatusNotificationRequest) Action() string {
+	return StatusNotificationName
+}
+
+type StatusNotificationResponse struct{}
+
+func (StatusNotificationResponse) Action() string {
+	return StatusNotificationName
 }
 
 // MeterValues
@@ -455,7 +547,14 @@ type MeterValuesRequest struct {
 	MeterValue    []MeterValue `json:"meterValue"    validate:"required,min=1,dive"`
 }
 
-type MeterValuesResponse struct {
+func (MeterValuesRequest) Action() string {
+	return MeterValuesName
+}
+
+type MeterValuesResponse struct{}
+
+func (MeterValuesResponse) Action() string {
+	return MeterValuesName
 }
 
 //Authorize
@@ -479,6 +578,10 @@ type AuthorizeRequest struct {
 	IdTag IdToken `json:"idTag" validate:"required,max=20"`
 }
 
+func (AuthorizeRequest) Action() string {
+	return AuthorizeName
+}
+
 type AuthorizationStatus string
 
 const (
@@ -499,6 +602,10 @@ type AuthorizeResponse struct {
 	IdTagInfo IdTagInfo `json:"idTagInfo" validate:"required"`
 }
 
+func (AuthorizeResponse) Action() string {
+	return AuthorizeName
+}
+
 // StartTransaction
 
 type StartTransactionRequest struct {
@@ -509,9 +616,17 @@ type StartTransactionRequest struct {
 	Timestamp     string  `json:"timestamp" validate:"required,dateTime"`
 }
 
+func (StartTransactionRequest) Action() string {
+	return StartTransactionName
+}
+
 type StartTransactionResponse struct {
 	IdTagInfo     IdTagInfo `json:"idTagInfo" validate:"required"`
 	TransactionId int       `json:"transactionId" validate:"required"`
+}
+
+func (StartTransactionResponse) Action() string {
+	return StartTransactionName
 }
 
 //StopTransaction
@@ -555,8 +670,16 @@ type StopTransactionRequest struct {
 	TransactionData []MeterValue `json:"transactionData,omitempty" validate:"omitempty,dive"`
 }
 
+func (StopTransactionRequest) Action() string {
+	return StopTransactionName
+}
+
 type StopTransactionResponse struct {
 	IdTagInfo IdTagInfo `json:"idTagInfo,omitempty" validate:"omitempty"`
+}
+
+func (StopTransactionResponse) Action() string {
+	return StopTransactionName
 }
 
 //ChangeConfiguration
@@ -578,6 +701,10 @@ type ChangeConfigurationRequest struct {
 	Value string `json:"value" validate:"required,max=500"`
 }
 
+func (ChangeConfigurationRequest) Action() string {
+	return ChangeConfigurationName
+}
+
 type ConfigurationStatus string
 
 const (
@@ -589,6 +716,10 @@ const (
 
 type ChangeConfigurationResponse struct {
 	Status ConfigurationStatus `json:"status" validate:"required,configurationStatus"`
+}
+
+func (ChangeConfigurationResponse) Action() string {
+	return ChangeConfigurationName
 }
 
 //DataTransfer
@@ -610,6 +741,10 @@ type DataTransferRequest struct {
 	Data      string `json:"data,omitempty" validate:"omitempty"`
 }
 
+func (DataTransferRequest) Action() string {
+	return DataTransferName
+}
+
 type DataTransferStatus string
 
 const (
@@ -622,6 +757,10 @@ const (
 type DataTransferResponse struct {
 	Status DataTransferStatus `json:"status" validate:"required,dataTransferStatus"`
 	Data   string             `json:"data,omitempty" validate:"omitempty"`
+}
+
+func (DataTransferResponse) Action() string {
+	return DataTransferName
 }
 
 //SetChargingProfile
@@ -648,10 +787,18 @@ type SetChargingProfileRequest struct {
 	ChargingProfile ChargingProfile `json:"csChargingProfiles" validate:"required"`
 }
 
+func (SetChargingProfileRequest) Action() string {
+	return SetChargingProfileName
+}
+
 type ChargingProfileStatus string
 
 type SetChargingProfileResponse struct {
 	Status ChargingProfileStatus `json:"status" validate:"required,chargingProfileStatus"`
+}
+
+func (SetChargingProfileResponse) Action() string {
+	return SetChargingProfileName
 }
 
 //RemoteStartTransaction
@@ -770,6 +917,10 @@ type RemoteStartTransactionRequest struct {
 	ChargingProfile ChargingProfile `json:"chargingProfile,omitempty" validate:"omitempty"`
 }
 
+func (RemoteStartTransactionRequest) Action() string {
+	return RemoteStartTransactionName
+}
+
 const (
 	remoteStartAccepted RemoteStartStatus = "Accepted"
 	remoteStartRejected RemoteStartStatus = "Rejected"
@@ -777,6 +928,10 @@ const (
 
 type RemoteStartTransactionResponse struct {
 	Status RemoteStartStatus `json:"status" validate:"required,remoteStartStopStatus"`
+}
+
+func (RemoteStartTransactionResponse) Action() string {
+	return RemoteStartTransactionName
 }
 
 //RemoteStopTransaction
@@ -798,6 +953,10 @@ type RemoteStopTransactionRequest struct {
 	TransactionId int `json:"transactionId" validate:"required"`
 }
 
+func (RemoteStopTransactionRequest) Action() string {
+	return RemoteStopTransactionName
+}
+
 type RemoteStopStatus string
 
 const (
@@ -807,6 +966,10 @@ const (
 
 type RemoteStopTransactionResponse struct {
 	Status RemoteStopStatus `json:"status" validate:"required,remoteStopStatus"`
+}
+
+func (RemoteStopTransactionResponse) Action() string {
+	return RemoteStopTransactionName
 }
 
 //Reset
@@ -844,6 +1007,10 @@ type ResetRequest struct {
 	Type ResetType `json:"type" validate:"required,resetType"`
 }
 
+func (ResetRequest) Action() string {
+	return ResetName
+}
+
 type ResetStatus string
 
 const (
@@ -853,6 +1020,10 @@ const (
 
 type ResetResponse struct {
 	Status ResetStatus `json:"status" validate:"required,resetStatus"`
+}
+
+func (ResetResponse) Action() string {
+	return ResetName
 }
 
 //UnlockConnector
@@ -874,6 +1045,10 @@ type UnlockConnectorRequest struct {
 	ConnectorId int `json:"connectorId" validate:"required,gte=0"`
 }
 
+func (UnlockConnectorRequest) Action() string {
+	return UnlockConnectorName
+}
+
 type UnlockStatus string
 
 const (
@@ -884,4 +1059,8 @@ const (
 
 type UnlockConnectorResponse struct {
 	Status UnlockStatus `json:"status" validate:"required,unlockStatus"`
+}
+
+func (UnlockConnectorResponse) Action() string {
+	return UnlockConnectorName
 }

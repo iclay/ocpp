@@ -29,10 +29,11 @@ var OCPP16M = &OCPP16Map{
 	traitMap: make(map[string]ocpptrait),
 }
 
-type Response interface {
+type Request interface {
 	Action() string
 }
-type Request interface {
+
+type Response interface {
 	Action() string
 }
 type RequestHandler func(context.Context, Request) (Response, error)
@@ -54,6 +55,14 @@ func (m *OCPP16Map) register(traits ...ocpptrait) {
 	for _, trait := range traits {
 		m.traitMap[trait.Action()] = trait
 	}
+}
+
+func (m *OCPP16Map) SupportActions() []string {
+	var actions []string
+	for action, _ := range m.traitMap {
+		actions = append(actions, action)
+	}
+	return actions
 }
 
 func (m *OCPP16Map) GetTraitAction(action string) (ocpptrait, bool) {
