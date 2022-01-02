@@ -9,9 +9,10 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps: 
       - checkout 
-      - run: cd ocpp1.6 && go mod init ocpp1.6 && go mod vendor
+      - run: cd ocpp1.6 && go mod vendor
       - run: mkdir -p $TEST_RESULTS 
       - run: ls ocpp1.6/*
+      - run: go env 
       - restore_cache: 
           keys:
             - go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
