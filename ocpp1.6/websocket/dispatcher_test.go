@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/gorilla/websocket"
 	randn "math/rand"
 	"net/url"
 	"ocpp16/plugin/local"
@@ -13,6 +12,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 //go test -timeout=30m -v
@@ -128,7 +129,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 						if err != nil {
 							return
 						}
-						time.Sleep(time.Second * time.Duration(randn.Intn(3))/10)
+						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
 						//t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
 						mtx.Lock()
 						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
