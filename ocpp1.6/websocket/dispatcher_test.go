@@ -23,8 +23,7 @@ var addr = flag.String("addr", "127.0.0.1:8090", "websocket service address")
 func RandString(len int) string {
 	bytes := make([]byte, len, len)
 	for i := 0; i < len; i++ {
-		b := r.Intn(28) + 65
-		t.Log("###b",b)
+		b := r.Intn(32) + 65
 		bytes[i] = byte(b)
 	}
 	return string(bytes)
