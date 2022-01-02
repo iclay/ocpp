@@ -9,19 +9,18 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps: 
       - checkout 
-      - run: go mod vendor 
+      - run: cd ocpp1.6 && go mod vendor
       - run: mkdir -p $TEST_RESULTS 
-      - run: pwd
+      - run: go env 
       - restore_cache: 
           keys:
             - go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
-      - run: pwd
       - save_cache:
           key: go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
           paths:
             - "/go/pkg/mod"
-      - run: go vet ./ocpp1.6/websocket
-      - run: go test ./ocpp1.6/websocket -timeout=30m -v
+      - run: cd ocpp1.6/websocket && go vet
+      - run: cd ocpp1.6/websocket && go test -timeout=30m
       - store_artifacts: 
           path: /tmp/test-results
           destination: raw-test-output
