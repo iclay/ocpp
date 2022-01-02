@@ -20,8 +20,8 @@ jobs:
           key: go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
           paths:
             - "/go/pkg/mod"
-      - run: go vet ./ocpp1.6/websocket
-      - run: go test ./ocpp1.6/websocket -timeout=30m -v
+      - run: cd ocpp1.6/websocket && go vet
+      - run: cd ocpp1.6/websocket && go test -timeout=30m -v
       - store_artifacts: 
           path: /tmp/test-results
           destination: raw-test-output
