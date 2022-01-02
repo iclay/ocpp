@@ -24,7 +24,7 @@ jobs:
       - run:
           name: run unit tests
           command:
-             PACKAGE_NAMES=cd ocpp1.6 && $(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+             PACKAGE_NAMES=cd $(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
              echo $PACKAGE_NAMES
              cd ocpp1.6 && gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - store_artifacts: 
