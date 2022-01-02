@@ -26,7 +26,7 @@ func RandString(len int) string {
 	defer mx.Unlock()
 	bytes := make([]byte, len, len)
 	for i := 0; i < len; i++ {
-		b := r.Intn(32) + 66
+		b := r.Intn(26) + 65
 		bytes[i] = byte(b)
 	}
 	return string(bytes)
