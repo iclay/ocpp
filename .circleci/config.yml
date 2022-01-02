@@ -9,6 +9,7 @@ jobs:
       TEST_RESULTS: /tmp/test-results 
     steps: 
       - checkout 
+      - run: cd ocpp1.6 && go mod vendor
       - run: mkdir -p $TEST_RESULTS 
       - restore_cache: 
           keys:
