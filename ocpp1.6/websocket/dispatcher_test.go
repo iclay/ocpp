@@ -17,32 +17,34 @@ import (
 )
 
 //go test -timeout=30m -v
+var mx sync.Mutex
 var r = randn.New(randn.NewSource(time.Now().Unix()))
 var addr = flag.String("addr", "127.0.0.1:8090", "websocket service address")
-
-// func RandString(len int) string {
-// 	bytes := make([]byte, len, len)
-// 	for i := 0; i < len; i++ {
-// 		b := r.Intn(32) + 66
-// 		bytes[i] = byte(b)
-// 	}
-// 	return string(bytes)
-// }
-var mx sync.Mutex
-
-func randomInt(min, max int) int {
-	return min + r.Intn(max-min)
-}
 
 func RandString(len int) string {
 	mx.Lock()
 	defer mx.Unlock()
-	bytes := make([]byte, len)
+	bytes := make([]byte, len, len)
 	for i := 0; i < len; i++ {
-		bytes[i] = byte(randomInt(65, 90))
+		b := r.Intn(32) + 66
+		bytes[i] = byte(b)
 	}
 	return string(bytes)
 }
+
+// func randomInt(min, max int) int {
+// 	return min + r.Intn(max-min)
+// }
+
+// func RandString(len int) string {
+// 	mx.Lock()
+// 	defer mx.Unlock()
+// 	bytes := make([]byte, len)
+// 	for i := 0; i < len; i++ {
+// 		bytes[i] = byte(randomInt(65, 90))
+// 	}
+// 	return string(bytes)
+// }
 func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 	flag.Parse()
 	name, id := RandString(5), RandString(5)
@@ -103,7 +105,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 			case res_uniqueid := <-ch:
 				rep_uniqueid, _ := queue.Pop()
 				next_uniqueid, _ := queue.Peek()
-				t.Logf("ws_id(%v), res_uniqueid(%v),rep_uniqueid(%v),queue remain(%v), next_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
+				// t.Logf("ws_id(%v), res_uniqueid(%v),rep_uniqueid(%v),queue remain(%v), next_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
 				if res_uniqueid != rep_uniqueid {
 					t.Errorf("ws_id(%v), res_uniqueid(%v) != rep_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid)
 				}
@@ -216,7 +218,6 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 }
 
 func TestDispatcherHandler(t *testing.T) {
-	//t.Log("<")
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*1000)
 	server := NewDefaultServer()
 	plugin := local.NewLocalService()
@@ -224,7 +225,7 @@ func TestDispatcherHandler(t *testing.T) {
 	go func() {
 		server.Serve(*addr, "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 400; i++ { //numbers of client
+	for i := 0; i < 20; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		go func() {
 			clientHandler(ctx, t, server.dispatcher)

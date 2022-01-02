@@ -6,10 +6,11 @@ import (
 	"ocpp16/proto"
 	"time"
 
+	"reflect"
+
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
-	"reflect"
 )
 
 type HandleFuncs interface {
@@ -113,8 +114,8 @@ func (s *Server) setDefaultDispatcher(d *dispatcher) {
 }
 
 type ChargerPoint struct {
-	Name string `uri:"name" binding:"required,uuid"` //充电中心名称
-	ID   string `uri:"id" binding:"required"`        //充电枪ID
+	Name string `uri:"name" binding:"required,uuid"`
+	ID   string `uri:"id" binding:"required"`
 }
 
 func (c *ChargerPoint) String() string {
@@ -131,7 +132,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 	var ocppProto string
 	clientSubprotocols := websocket.Subprotocols(c.Request)
 	for _, cproti := range clientSubprotocols {
-		for _, sproto := range clientSubprotocols /*需要修改成server*/ {
+		for _, sproto := range clientSubprotocols /*need modify server*/ {
 			if cproti == sproto {
 				ocppProto = sproto
 				break
@@ -144,13 +145,15 @@ func (s *Server) wsHandler(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	// if ocppProto == "" { //协议不支持，关闭连接
+	// if ocppProto == "" { //The protocol does not support closing connections
 	// 	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
 	// 		fmt.Sprintf("not support protocol for chargegun(%v), protocol(%+v)", p.String(), clientSubprotocols)), time.Now().Add(time.Second) /*时间需要写到配置参数中*/)
 	// 	conn.Close()
 	// 	return
 	// }
-	if s.connExists(p.String()) { /*该情况可能出现在充电桩已经断线，但是云端心跳机制没来及反应，充电桩在一次发起连接需要等待云端触发心跳机制给上一次连接关闭*/
+	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
+	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
+	if s.connExists(p.String()) {
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError,
 				fmt.Sprintf("id(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second) /**时间需要写到配置参数中*/)
