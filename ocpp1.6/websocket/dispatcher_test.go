@@ -28,12 +28,15 @@ var addr = flag.String("addr", "127.0.0.1:8090", "websocket service address")
 // 	}
 // 	return string(bytes)
 // }
+var mx sync.Mutex
 
 func randomInt(min, max int) int {
 	return min + r.Intn(max-min)
 }
 
 func RandString(len int) string {
+	mx.Lock()
+	defer mx.Unlock()
 	bytes := make([]byte, len)
 	for i := 0; i < len; i++ {
 		bytes[i] = byte(randomInt(65, 90))
