@@ -218,7 +218,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 }
 
 func TestDispatcherHandler(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*1000)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*100)
 	server := NewDefaultServer()
 	plugin := local.NewLocalService()
 	server.RegisterOCPPHandler(plugin)
