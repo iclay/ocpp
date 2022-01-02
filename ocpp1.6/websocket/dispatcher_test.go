@@ -104,7 +104,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 				return
 			case res_uniqueid := <-ch:
 				rep_uniqueid, _ := queue.Pop()
-				next_uniqueid, _ := queue.Peek()
+				// next_uniqueid, _ := queue.Peek()
 				// t.Logf("ws_id(%v), res_uniqueid(%v),rep_uniqueid(%v),queue remain(%v), next_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
 				if res_uniqueid != rep_uniqueid {
 					t.Errorf("ws_id(%v), res_uniqueid(%v) != rep_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid)
