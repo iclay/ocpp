@@ -23,10 +23,9 @@ jobs:
       #- run: cd ocpp1.6/websocket && go test -timeout=30m > $TEST_RESULTS/test
       - run:
           name: run unit tests
-          command:
-             PACKAGE_NAMES=cd $(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
-             echo $PACKAGE_NAMES
-             cd ocpp1.6 && gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
+          command: |
+            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
+            gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
       - store_artifacts: 
           path: /tmp/test-results
           destination: raw-test-output
