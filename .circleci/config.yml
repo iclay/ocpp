@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: circleci/golang:1.14
     parallelism: 2
+    working_directory: ~/go-circleci
     environment: 
       TEST_RESULTS: /tmp/test-results 
     steps: 
