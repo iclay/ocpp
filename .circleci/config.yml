@@ -20,7 +20,7 @@ jobs:
           paths:
             - "/go/pkg/mod"
       - run: cd ocpp1.6/websocket && go vet
-      - run: cd ocpp1.6/websocket && go test -timeout=30m
+      - run: cd ocpp1.6/websocket && go test -timeout=30m > $TEST_RESULTS
       - store_artifacts: 
           path: /tmp/test-results
           destination: raw-test-output
