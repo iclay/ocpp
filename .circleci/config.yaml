@@ -1,0 +1,34 @@
+version: 2
+jobs: 
+  build: 
+    docker:
+      - image: circleci/golang:1.14
+    parallelism: 2
+    working_directory: ~/go-circleci
+    environment: 
+      TEST_RESULTS: /tmp/test-results 
+    steps: 
+      - checkout 
+      - run: go mod vendor 
+      - run: mkdir -p $TEST_RESULTS 
+      - restore_cache: 
+          keys:
+            - go-mod-v4-{{ checksum "go.sum" }}
+      - run: ps aux
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+      - run: go vet ./ocpp1.6/websocket
+      - run: go test ./ocpp1.6/websocket -timeout=30m -v
+      - store_artifacts: 
+          path: /tmp/test-results
+          destination: raw-test-output
+      - store_test_results: 
+          path: /tmp/test-results
+workflows:
+  version: 2
+  build-workflow:
+    jobs:
+      - build
+
