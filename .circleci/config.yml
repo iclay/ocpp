@@ -11,6 +11,7 @@ jobs:
       - checkout 
       - run: cd ocpp1.6 && go mod vendor
       - run: mkdir -p $TEST_RESULTS 
+      - run: ls ocpp1.6/* 
       - restore_cache: 
           keys:
             - go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
