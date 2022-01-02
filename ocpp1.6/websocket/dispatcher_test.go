@@ -23,13 +23,12 @@ var addr = flag.String("addr", "127.0.0.1:8090", "websocket service address")
 func RandString(len int) string {
 	bytes := make([]byte, len, len)
 	for i := 0; i < len; i++ {
-		b := r.Intn(32) + 65
+		b := r.Intn(32) + 66
 		bytes[i] = byte(b)
 	}
 	return string(bytes)
 }
-func clientHandle
-r(ctx context.Context, t *testing.T, d *dispatcher) {
+func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 	flag.Parse()
 	name, id := RandString(5), RandString(5)
 	path := fmt.Sprintf("/ocpp/%v/%v", name, id)
