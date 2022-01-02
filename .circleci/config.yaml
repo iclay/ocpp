@@ -15,7 +15,7 @@ jobs:
       - restore_cache: 
           keys:
             - go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
-      - run: ps aux
+      - run: pwd
       - save_cache:
           key: go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
           paths:
