@@ -36,8 +36,8 @@ func main() {
 		},
 		Authors: []*cli.Author{
 			{
-				Name:  "Tsinglink tech",
-				Email: "tech@qinglianyun.com",
+				Name:  "lihuaye",
+				Email: "16499111504li@gmail.com",
 			},
 		},
 		Copyright: "Beijing Tsinglink Cloud Technology Co., Ltd (2021)",

@@ -153,7 +153,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 	if s.connExists(p.String()) { /*该情况可能出现在充电桩已经断线，但是云端心跳机制没来及反应，充电桩在一次发起连接需要等待云端触发心跳机制给上一次连接关闭*/
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError,
-				fmt.Sprintf("chargegun(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second) /**时间需要写到配置参数中*/)
+				fmt.Sprintf("id(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second) /**时间需要写到配置参数中*/)
 		conn.Close()
 		return
 	}
