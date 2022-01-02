@@ -12,10 +12,10 @@ jobs:
       - run: mkdir -p $TEST_RESULTS 
       - restore_cache: 
           keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
+            - go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
       - run: ps aux
       - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
+          key: go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
           paths:
             - "/go/pkg/mod"
       - run: go vet ./ocpp1.6/websocket
