@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,17 +9,15 @@ import (
 	"reflect"
 	"sync"
 	"time"
-	// "strings"
-	"bytes"
+
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 )
 
 type wsconn struct {
 	server  *Server
 	conn    *websocket.Conn
 	id      string
-	timeOut time.Duration
+	timeout time.Duration
 	ping    chan []byte
 	closeC  chan error
 	closed  bool
@@ -69,42 +68,56 @@ func (ws *wsconn) stop(err error) {
 
 func (ws *wsconn) read() {
 	conn := ws.conn
-	_ = ws.setReadDeadTimeout(ws.timeOut)
+	ws.setReadDeadTimeout(ws.timeout)
 	conn.SetPingHandler(func(appData string) error {
 		ws.ping <- []byte(appData)
-		return ws.setReadDeadTimeout(ws.timeOut)
+		return ws.setReadDeadTimeout(ws.timeout)
 	})
 	for {
 		typ, message, err := conn.ReadMessage()
 		if err != nil {
-			log.Errorf("readmessage error, chagerfun:(%v), err:(%v)\n", ws.id, err)
+			log.Errorf("read error, id(%v), err(%v)", ws.id, err)
 			ws.Lock()
 			ws.stop(err)
 			ws.Unlock()
 			return
 		}
-		log.Debugf("readMessage: chargegun:(%v) send:(%v), messagetype:(%v)\n", ws.id, string(message), typ)
-		_ = ws.setReadDeadTimeout(ws.timeOut)
+		log.Debugf("read: id(%v), recv(%v), messagetype(%v)", ws.id, string(message), typ)
+		ws.setReadDeadTimeout(ws.timeout)
 		go ws.messageHandler(message)
 	}
 }
 
+func (ws *wsconn) responseHandler(uniqueid string, action string, res proto.Response) {
+	if handler, ok := ws.server.actionPlugin.ResponseHandler(action); ok {
+		log.Debugf("client response, id(%v), uniqueid(%v),action(%v), response(%+v)", ws.id, uniqueid, action, res)
+		if err := handler(context.Background(), res); err != nil {
+			log.Errorf("response handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
+		}
+		return
+	}
+	log.Errorf("not support action:(%v) current, id:(%v), uniqueid:(%v)", action, ws.id, uniqueid)
+}
+
 func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Request) {
-	if handler, ok := ws.server.ocppHandlerMap[action]; ok {
+
+	if handler, ok := ws.server.actionPlugin.RequestHandler(action); ok {
+		log.Debugf("client request, id(%v), uniqueid(%v),action(%v), request(%+v)", ws.id, uniqueid, action, req)
 		res, err := handler(context.Background(), req)
 		if err != nil {
 			log.Errorf("request handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
-			return
-		}
-		err = ws.server.validate.Struct(res)
-		if err != nil {
-			log.Errorf("response invalid, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
 		callResult := &proto.CallResult{
 			MessageTypeID: proto.CALL_RESULT,
 			UniqueID:      uniqueid,
 			Response:      res,
+		}
+		log.Debugf("server response, id(%v), uniqueid(%v),action(%v), callResult(%+v)", ws.id, uniqueid, action, callResult)
+		err = ws.server.validate.Struct(callResult)
+		if err != nil {
+			log.Errorf("validate callResult invalid, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, checkValidatorError(err, action))
+			return
 		}
 		result, err := json.Marshal(callResult)
 		if err != nil {
@@ -114,7 +127,6 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 		err = ws.writeMessage(websocket.TextMessage, result)
 		if err != nil {
 			log.Errorf("write message error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
-			return
 		}
 		return
 	}
@@ -138,13 +150,12 @@ func (ws *wsconn) writeMessage(messageType int, data []byte) error {
 	if ws.closed {
 		return fmt.Errorf("conn has closed down, id(%v)", ws.id)
 	}
-	_ = ws.setWriteDeadTimeout(ws.timeOut)
-	err := ws.conn.WriteMessage(messageType, data)
-	if err != nil {
+	ws.setWriteDeadTimeout(ws.timeout)
+	var err error
+	if err = ws.conn.WriteMessage(messageType, data); err != nil {
 		ws.stop(err)
 	}
 	return err
-
 }
 
 func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
@@ -176,9 +187,9 @@ func parseMessage(wsmsg []byte) ([]interface{}, error) {
 }
 
 const (
-	Call       = "CALL"
-	CallResult = "CALL_RESULT"
-	CallError  = "CALL_ERROR"
+	Call       = proto.CallName
+	CallResult = proto.CallResultName
+	CallError  = proto.CallErrorName
 )
 
 func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
@@ -204,7 +215,8 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		}
 		return
 	}
-	if ocpptrait, ok := ws.server.ocpp16map.GetTraitAction(action); !ok {
+	ocpptrait, ok := ws.server.ocpp16map.GetTraitAction(action)
+	if !ok {
 		log.Errorf("not support action(%v) current,id(%v),wsmsg(%v),wsmsg_type(%v)", action, ws.id, string(wsmsg), Call)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.NotSupported,
@@ -213,55 +225,46 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
 		}
 		return
-	} else {
-		reqType := ocpptrait.RequestType()
-		reqByte, err := json.Marshal(fields[3])
-		if err != nil {
-			log.Errorf("json Marshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			if err = ws.sendCallError(uniqueid, &Error{
-				ErrorCode:        proto.CallInternalError,
-				ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
-				ErrorDetails:     nil}); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			}
-			return
-		}
-		// req := reflect.New(reqType).Interface()
-		req := ws.server.get(reqType)
-		defer ws.server.put(reqType, req)
-		err = json.Unmarshal(reqByte, &req)
-		if err != nil {
-			log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			if err = ws.sendCallError(uniqueid, &Error{
-				ErrorCode:        proto.CallInternalError,
-				ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
-				ErrorDetails:     nil}); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			}
-			return
-		}
-		err = ws.server.validate.Struct(req)
-		if err != nil {
-			log.Errorf("validate  PayLoad error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			}
-			return
-		}
-		if err = ws.server.validate.Struct(proto.Call{
-			MessageTypeID: proto.CALL,
-			UniqueID:      uniqueid,
-			Action:        action,
-			Request:       req.(proto.Request),
-		}); err != nil {
-			log.Errorf("validate Call error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
-			}
-			return
-		}
-		ws.requestHandler(uniqueid, action, req.(proto.Request))
 	}
+	reqType := ocpptrait.RequestType()
+	reqByte, err := json.Marshal(fields[3])
+	if err != nil {
+		log.Errorf("json Marshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
+		if err = ws.sendCallError(uniqueid, &Error{
+			ErrorCode:        proto.CallInternalError,
+			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
+			ErrorDetails:     nil}); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
+		}
+		return
+	}
+	req := ws.server.get(reqType)
+	defer ws.server.put(reqType, req)
+	err = json.Unmarshal(reqByte, &req)
+	if err != nil {
+		log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
+		if err = ws.sendCallError(uniqueid, &Error{
+			ErrorCode:        proto.CallInternalError,
+			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
+			ErrorDetails:     nil}); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
+		}
+		return
+	}
+	call := proto.Call{
+		MessageTypeID: proto.CALL,
+		UniqueID:      uniqueid,
+		Action:        action,
+		Request:       req.(proto.Request),
+	}
+	if err = ws.server.validate.Struct(call); err != nil {
+		log.Errorf("validate Call error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", checkValidatorError(err, action), ws.id, string(wsmsg), Call)
+		if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
+		}
+		return
+	}
+	ws.requestHandler(uniqueid, action, req.(proto.Request))
 }
 func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
 	if len(fields) != 3 {
@@ -290,7 +293,8 @@ func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		}
 		return
 	}
-	if ocpptrait, ok := ws.server.ocpp16map.GetTraitAction(action); !ok {
+	ocpptrait, ok := ws.server.ocpp16map.GetTraitAction(action)
+	if !ok {
 		log.Errorf("not support action(%v) current,id(%v),wsmsg(%v),wsmsg_type(%v)", action, ws.id, string(wsmsg), CallResult)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.NotSupported,
@@ -299,55 +303,45 @@ func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
 		}
 		return
-	} else {
-		resType := ocpptrait.ResponseType()
-		resByte, err := json.Marshal(fields[2])
-		if err != nil {
-			log.Errorf("json Marshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			if err = ws.sendCallError(uniqueid, &Error{
-				ErrorCode:        proto.CallInternalError,
-				ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
-				ErrorDetails:     nil}); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			}
-			return
-		}
-
-		// res := reflect.New(resType).Interface()
-		res := ws.server.get(resType)
-		defer ws.server.put(resType, res)
-		err = json.Unmarshal(resByte, &res)
-		if err != nil {
-			log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			if err = ws.sendCallError(uniqueid, &Error{
-				ErrorCode:        proto.CallInternalError,
-				ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
-				ErrorDetails:     nil}); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-				return
-			}
-		}
-		err = ws.server.validate.Struct(res)
-		if err != nil {
-			log.Errorf("validate  PayLoad error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			}
-			return
-		}
-		if err = ws.server.validate.Struct(proto.CallResult{
-			MessageTypeID: proto.CALL_RESULT,
-			UniqueID:      uniqueid,
-			Response:      res.(proto.Response),
-		}); err != nil {
-			log.Errorf("validate CallResult error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
-				log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
-			}
-			return
-		}
-		ws.server.requestDone(ws.id, uniqueid)
 	}
+	resType := ocpptrait.ResponseType()
+	resByte, err := json.Marshal(fields[2])
+	if err != nil {
+		log.Errorf("json Marshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
+		if err = ws.sendCallError(uniqueid, &Error{
+			ErrorCode:        proto.CallInternalError,
+			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
+			ErrorDetails:     nil}); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
+		}
+		return
+	}
+	res := ws.server.get(resType)
+	defer ws.server.put(resType, res)
+	if err = json.Unmarshal(resByte, &res); err != nil {
+		log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
+		if err = ws.sendCallError(uniqueid, &Error{
+			ErrorCode:        proto.CallInternalError,
+			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%v)", err, uniqueid),
+			ErrorDetails:     nil}); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
+		}
+		return
+	}
+	callResult := proto.CallResult{
+		MessageTypeID: proto.CALL_RESULT,
+		UniqueID:      uniqueid,
+		Response:      res.(proto.Response),
+	}
+	if err = ws.server.validate.Struct(callResult); err != nil {
+		log.Errorf("validate CallResult error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", checkValidatorError(err, action), ws.id, string(wsmsg), CallResult)
+		if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallResult)
+		}
+		return
+	}
+	ws.server.requestDone(ws.id, uniqueid)
+	ws.responseHandler(uniqueid, action, res.(proto.Response))
 }
 
 func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
@@ -361,7 +355,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		}
 		return
 	}
-	errCode, ok := fields[2].(string) //must be string
+	errCode, ok := fields[2].(string)
 	if !ok {
 		log.Errorf("invalid CallError ErrCode(%v) type,must be string, id(%v), wsmsg(%v), wsmag_type(%v)", fields[2], ws.id, string(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
@@ -383,27 +377,39 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		}
 		return
 	}
-	pendingReq, ok := ws.server.getPendingRequest(uniqueid)
+	pendingReq, ok := ws.server.getPendingRequest(ws.id)
 	if !ok {
 		log.Errorf("ignoring this message may request have timed out or no request before,id(%v), wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallError)
 		return
 	}
-	if err := ws.server.validate.Struct(proto.CallError{
+	action := pendingReq.call.Action
+	if action == "" {
+		log.Errorf("action is nil, may be client response timeout or center never request,id(%v),wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallError)
+		if err := ws.sendCallError(uniqueid, &Error{
+			ErrorCode:        proto.CallInternalError,
+			ErrorDescription: fmt.Sprintf("may be client response timeout or center never request,uniqueid(%v)", uniqueid),
+			ErrorDetails:     nil}); err != nil {
+			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallError)
+		}
+		return
+	}
+	callError := proto.CallError{
 		MessageTypeID:    proto.CALL,
 		UniqueID:         uniqueid,
 		ErrorCode:        proto.ErrCodeType(errCode),
 		ErrorDescription: errorDescription,
 		ErrorDetails:     fields[4],
-	}); err != nil {
-		log.Errorf("validate CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallError)
+	}
+	if err := ws.server.validate.Struct(callError); err != nil {
+		log.Errorf("validate CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", checkValidatorError(err, action), ws.id, string(wsmsg), CallError)
 		action := pendingReq.call.Action
 		if err = ws.sendCallError(uniqueid, checkValidatorError(err, action)); err != nil {
 			log.Errorf("send CallError error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), CallError)
 		}
 		return
 	}
-
-	// ws.server.requestDone(ws.id, uniqueid)
+	ws.server.requestDone(ws.id, uniqueid)
+	ws.responseHandler(uniqueid, proto.CallErrorName, &callError)
 }
 
 func (ws *wsconn) messageHandler(wsmsg []byte) {

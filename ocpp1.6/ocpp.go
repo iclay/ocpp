@@ -2,12 +2,16 @@ package main
 
 import (
 	"fmt"
-	// "ocpp16/plugin/rpcx"
-	"ocpp16/plugin/local"
+	rpcx "ocpp16/plugin/rpcx"
+	registry "ocpp16/registry/rpcx"
+	// "ocpp16/plugin/local"
+	log "github.com/sirupsen/logrus"
+	cli "github.com/urfave/cli/v2"
+	"ocpp16/config"
+	"ocpp16/logwriter"
 	"ocpp16/websocket"
 	"os"
-
-	cli "github.com/urfave/cli/v2"
+	"time"
 )
 
 var Version = "manual build has no version"
@@ -36,8 +40,8 @@ func main() {
 		},
 		Authors: []*cli.Author{
 			{
-				Name:  "lihuaye",
-				Email: "16499111504li@gmail.com",
+				Name:  "Tsinglink tech",
+				Email: "tech@qinglianyun.com",
 			},
 		},
 		Copyright: "Beijing Tsinglink Cloud Technology Co., Ltd (2021)",
@@ -46,22 +50,44 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		fmt.Println(err.Error())
+		panic(err)
 	}
 }
 
-// func serve(c *cli.Context) error {
-// 	server := websocket.NewDefaultServer()
-// 	client := rpcx.NewRPCXClient([]string{}, "")
-// 	server.RegisterOCPPHandler(client)
-// 	server.Serve("127.0.0.1:8090", "/ocpp/:name/:id")
-// 	return nil
-// }
-
+func initLogger() *log.Logger {
+	conf := config.GCONF
+	lw := &logwriter.HourlySplit{
+		Dir:           conf.LogPath,
+		FileFormat:    "log_2006-01-02T15",
+		MaxFileNumber: conf.LogMaxFileNum,
+		MaxDiskUsage:  conf.LogMaxDiskUsage,
+	}
+	defer lw.Close()
+	lg := log.New()
+	customFormatter := &log.TextFormatter{
+		TimestampFormat: time.RFC3339,
+		FullTimestamp:   true,
+	}
+	lg.SetFormatter(customFormatter)
+	lg.SetReportCaller(true)
+	lg.SetOutput(lw)
+	lv, err := log.ParseLevel(conf.LogLevel)
+	if err != nil {
+		lv = log.WarnLevel
+	}
+	lg.SetLevel(lv)
+	return lg
+}
 func serve(c *cli.Context) error {
+	config.ParseFile(c.String("config"))
+	config.Print()
+	conf := config.GCONF
+	lg := initLogger()
+	websocket.SetLogger(lg)
 	server := websocket.NewDefaultServer()
-	plugin := local.NewLocalService()
-	server.RegisterOCPPHandler(plugin)
-	server.Serve("127.0.0.1:8090", "/ocpp/:name/:id")
+	server.RegisterActionPlugin(rpcx.NewActionPlugin())
+	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
+	serveAddr, serveURI := fmt.Sprintf("%v:%v", conf.WebsocketAddr, conf.WebsocketPort), conf.WebsocketURI
+	server.Serve(serveAddr, serveURI)
 	return nil
 }

@@ -32,6 +32,9 @@ const (
 	RemoteStopTransactionName  = "RemoteStopTransaction"
 	ResetName                  = "Reset"
 	UnlockConnectorName        = "UnlockConnector"
+	CallName                   = "Call"
+	CallErrorName              = "CallError"
+	CallResultName             = "CallResult"
 )
 
 type CallAbstract interface {
@@ -55,7 +58,8 @@ func (c *Call) MessageType() MessageType {
 func (c *Call) UID() string {
 	return c.UniqueID
 }
-func (c *Call) String() string {
+
+func (c *Call) SpecificRequest() Request {
 	switch c.Request.(type) {
 	case BootNotificationRequest:
 		c.Request = c.Request.(BootNotificationRequest)
@@ -87,6 +91,10 @@ func (c *Call) String() string {
 		c.Request = c.Request.(UnlockConnectorRequest)
 	default:
 	}
+	return c.Request
+}
+func (c *Call) String() string {
+	c.SpecificRequest()
 	callBytes, _ := json.Marshal(c)
 	return string(callBytes)
 }
@@ -112,7 +120,7 @@ func (cr *CallResult) UID() string {
 	return cr.UniqueID
 }
 
-func (cr *CallResult) String() string {
+func (cr *CallResult) SpecificResponse() Response {
 	switch cr.Response.(type) {
 	case BootNotificationResponse:
 		cr.Response = cr.Response.(BootNotificationResponse)
@@ -144,6 +152,11 @@ func (cr *CallResult) String() string {
 		cr.Response = cr.Response.(UnlockConnectorResponse)
 	default:
 	}
+	return cr.Response
+}
+
+func (cr *CallResult) String() string {
+	cr.SpecificResponse()
 	callResBytes, _ := json.Marshal(cr)
 	return string(callResBytes)
 }
@@ -177,6 +190,9 @@ type CallError struct {
 	ErrorDetails     interface{} `json:"errorDetails" validate:"omitempty"`
 }
 
+func (ce CallError) Action() string {
+	return "CallError"
+}
 func (ce *CallError) MessageType() MessageType {
 	return ce.MessageTypeID
 }

@@ -65,6 +65,9 @@ github.com/edwingeng/doublejump
 github.com/facebookgo/clock
 # github.com/fatih/color v1.9.0
 github.com/fatih/color
+# github.com/gin-contrib/pprof v1.3.0
+## explicit
+github.com/gin-contrib/pprof
 # github.com/gin-contrib/sse v0.1.0
 github.com/gin-contrib/sse
 # github.com/gin-gonic/gin v1.7.7
@@ -226,6 +229,7 @@ github.com/opentracing/opentracing-go/log
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
+## explicit
 github.com/rcrowley/go-metrics
 github.com/rcrowley/go-metrics/exp
 # github.com/rs/cors v1.7.0

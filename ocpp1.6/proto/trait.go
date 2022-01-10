@@ -36,7 +36,8 @@ type Request interface {
 type Response interface {
 	Action() string
 }
-type RequestHandler func(context.Context, Request) (Response, error)
+type RequestHandler func(context.Context, Request) (Response, error) //charge point request handler
+type ResponseHandler func(context.Context, Response) error           //charge point response handler
 type ocpptrait interface {
 	Action() string
 	RequestType() reflect.Type

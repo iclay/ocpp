@@ -4,26 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"ocpp16/proto"
 	"runtime"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
 )
 
-type (
-	request struct {
-		call    *proto.Call
-		reqTime string
-	}
+type ActiveCallHandler func(ctx context.Context, id string, call *proto.Call) error
 
-	callStateMap struct {
-		pendingCallState map[string]*request
-		sync.RWMutex
-	}
-)
+type request struct {
+	call    *proto.Call
+	reqTime string
+}
+
+type callStateMap struct {
+	pendingCallState map[string]*request
+	sync.RWMutex
+}
 
 func (r *request) String() string {
 	return fmt.Sprintf("{call: %+v, reqTime: %v}", r.call, r.reqTime)
@@ -62,9 +60,8 @@ func (m *callStateMap) AddRequest(id string, request *request) error {
 	if req, ok := m.pendingCallState[id]; ok && request.call.UID() != "" && req.call.UID() == "" {
 		m.pendingCallState[id] = request
 		return nil
-	} else {
-		return fmt.Errorf("call state is not empty or connection close or other errors, so add request failed, id(%v),request(%+v)", id, request)
 	}
+	return fmt.Errorf("call state is not empty or connection close or other errors, so add request failed, id(%v),request(%+v)", id, request)
 }
 
 func (m *callStateMap) requestDone(id string, uniqueid string) {
@@ -214,6 +211,15 @@ func (d *dispatcher) run() {
 				ctx.cancel()
 				d.requestDone(id, ctx.uniqueid)
 				contextMap[id] = timeoutContext{}
+				if ws, ok := d.server.getConn(id); ok {
+					go ws.responseHandler(ctx.uniqueid, proto.CallErrorName, &proto.CallError{
+						MessageTypeID:    proto.CALL_ERROR,
+						UniqueID:         ctx.uniqueid,
+						ErrorCode:        proto.CallInternalError,
+						ErrorDescription: fmt.Sprintf("client response timeout,uniqueid(%v)", ctx.uniqueid),
+						ErrorDetails:     nil,
+					})
+				}
 			}
 		}
 		if allow && !q.IsEmpty() {
@@ -281,7 +287,11 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 						uniqueid: uniqueid,
 					}
 				default:
-					log.Debugf("timeoutC has cancald due to valid response or connection close id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
+					if _, ok := d.server.getConn(id); !ok {
+						log.Debugf("timeoutC has cancald due to connection close, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
+					} else {
+						log.Debugf("client success response, so timeoutC has cancald, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
+					}
 				}
 			}
 		}()
@@ -314,12 +324,24 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 	d.nextReadyC <- id
 }
 
-func (d *dispatcher) appendRequest(id string, call *proto.Call) error {
+func (d *dispatcher) appendRequest(ctx context.Context, id string, call *proto.Call) error {
+	log.Debugf("active call, append request, id (%v),call(%+v)", id, call)
 	if call == nil || call.UniqueID == "" {
-		return fmt.Errorf("append request failed,call is nil or uniqueid is nil,id(%v),call(%+v)", id, call)
+		log.Errorf("active call failed, call is nil or uniqueid is nil,id(%v),call(%+v)", id, call)
+		return fmt.Errorf("active call failed, call is nil or uniqueid is nil,id(%v),call(%+v)", id, call)
 	}
 	if err := d.server.validate.Struct(call); err != nil {
-		return fmt.Errorf("append request failed because of vaild call error,id(%v),call(%+v), err(%v)", id, call, checkValidatorError(err, call.Action))
+		log.Errorf("active call failed, invaild call,id(%v),call(%+v), err(%v)", id, call, checkValidatorError(err, call.Action))
+		return fmt.Errorf("active call failed, invaild call,id(%v),call(%+v), err(%v)", id, call, checkValidatorError(err, call.Action))
+	}
+	if _, ok := d.server.ocpp16map.GetTraitAction(call.Action); !ok {
+		return fmt.Errorf("active call failed, not support action(%v) current,id(%v), call(%+v)", call.Action, id, call)
+	}
+	req := call.SpecificRequest()
+	err := d.server.validate.Struct(req)
+	if err != nil {
+		log.Errorf("active call failed, validate  payload error(%v),id(%v),call(%+v)", checkValidatorError(err, call.Action), id, call)
+		return fmt.Errorf("active call failed, validate  payload error(%v),id(%v),call(%+v)", checkValidatorError(err, call.Action), id, call)
 	}
 	if err := d.requestQueueMap.pushRequset(id, &request{
 		call: call,
