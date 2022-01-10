@@ -4,14 +4,16 @@ import (
 	"fmt"
 	rpcx "ocpp16/plugin/rpcx"
 	registry "ocpp16/registry/rpcx"
+
 	// "ocpp16/plugin/local"
-	log "github.com/sirupsen/logrus"
-	cli "github.com/urfave/cli/v2"
 	"ocpp16/config"
 	"ocpp16/logwriter"
 	"ocpp16/websocket"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	cli "github.com/urfave/cli/v2"
 )
 
 var Version = "manual build has no version"
@@ -41,7 +43,7 @@ func main() {
 		Authors: []*cli.Author{
 			{
 				Name:  "Tsinglink tech",
-				Email: "tech@qinglianyun.com",
+				Email: "16499111504li@gmail.com",
 			},
 		},
 		Copyright: "Beijing Tsinglink Cloud Technology Co., Ltd (2021)",

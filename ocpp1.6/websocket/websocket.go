@@ -166,8 +166,7 @@ func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
 		ErrorDescription: e.ErrorDescription,
 		ErrorDetails:     nil,
 	}
-	err := ws.server.validate.Struct(callError)
-	if err != nil {
+	if err := ws.server.validate.Struct(callError); err != nil {
 		return err
 	}
 	bf := bytes.NewBuffer([]byte{})
@@ -179,8 +178,7 @@ func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
 
 func parseMessage(wsmsg []byte) ([]interface{}, error) {
 	var fields []interface{}
-	err := json.Unmarshal(wsmsg, &fields)
-	if err != nil {
+	if err := json.Unmarshal(wsmsg, &fields); err != nil {
 		return nil, err
 	}
 	return fields, nil
