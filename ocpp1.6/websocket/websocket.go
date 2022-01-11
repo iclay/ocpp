@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/smallnest/rpcx/share"
 )
 
 type wsconn struct {
@@ -90,8 +91,12 @@ func (ws *wsconn) read() {
 
 func (ws *wsconn) responseHandler(uniqueid string, action string, res proto.Response) {
 	if handler, ok := ws.server.actionPlugin.ResponseHandler(action); ok {
+		ctx := context.WithValue(context.Background(), share.ResMetaDataKey, map[string]string{
+			"chargingPointIdentify": ws.id,
+			"messageId":             uniqueid,
+		})
 		log.Debugf("client response, id(%v), uniqueid(%v),action(%v), response(%+v)", ws.id, uniqueid, action, res)
-		if err := handler(context.Background(), res); err != nil {
+		if err := handler(ctx, res); err != nil {
 			log.Errorf("response handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 		}
 		return
@@ -102,8 +107,12 @@ func (ws *wsconn) responseHandler(uniqueid string, action string, res proto.Resp
 func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Request) {
 
 	if handler, ok := ws.server.actionPlugin.RequestHandler(action); ok {
+		ctx := context.WithValue(context.Background(), share.ReqMetaDataKey, map[string]string{
+			"chargingPointIdentify": ws.id,
+			"messageId":             uniqueid,
+		})
 		log.Debugf("client request, id(%v), uniqueid(%v),action(%v), request(%+v)", ws.id, uniqueid, action, req)
-		res, err := handler(context.Background(), req)
+		res, err := handler(ctx, req)
 		if err != nil {
 			log.Errorf("request handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
@@ -114,8 +123,7 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 			Response:      res,
 		}
 		log.Debugf("server response, id(%v), uniqueid(%v),action(%v), callResult(%+v)", ws.id, uniqueid, action, callResult)
-		err = ws.server.validate.Struct(callResult)
-		if err != nil {
+		if err = ws.server.validate.Struct(callResult); err != nil {
 			log.Errorf("validate callResult invalid, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, checkValidatorError(err, action))
 			return
 		}
@@ -124,8 +132,7 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req proto.Reque
 			log.Errorf("marshal result error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
-		err = ws.writeMessage(websocket.TextMessage, result)
-		if err != nil {
+		if err = ws.writeMessage(websocket.TextMessage, result); err != nil {
 			log.Errorf("write message error, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 		}
 		return
@@ -238,8 +245,7 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 	}
 	req := ws.server.get(reqType)
 	defer ws.server.put(reqType, req)
-	err = json.Unmarshal(reqByte, &req)
-	if err != nil {
+	if err = json.Unmarshal(reqByte, &req); err != nil {
 		log.Errorf("json Unmarshal error(%v),id(%v),wsmsg(%v),wsmsg_type(%v)", err, ws.id, string(wsmsg), Call)
 		if err = ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        proto.CallInternalError,

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/pprof"
+	// "github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
@@ -114,7 +114,7 @@ var defaultServer = func() *Server {
 		ocppTypePools: typePools,
 		actionPlugin:  local.NewActionPlugin(), //default action plugin
 	}
-	pprof.Register(s.ginServer)
+	// pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
 	return s
@@ -170,13 +170,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 		return
 	}
 	//The protocol does not support
-	if ocppProto == "" {
-		log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
-		conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
-			fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
-		conn.Close()
-		return
-	}
+	// if ocppProto == "" {
+	// 	log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
+	// 	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
+	// 		fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
+	// 	conn.Close()
+	// 	return
+	// }
 	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
 	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
 	if s.connExists(p.String()) {

@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"ocpp16/proto"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type ActiveCallHandler func(ctx context.Context, id string, call *proto.Call) error
@@ -264,8 +265,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 		log.Errorf("get ws conn error, conn may be close, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
 		return
 	}
-	err = ws.writeMessage(websocket.TextMessage, message)
-	if err != nil {
+	if err = ws.writeMessage(websocket.TextMessage, message); err != nil {
 		d.requestDone(id, uniqueid)
 		log.Errorf("write message error, conn may be close or other errors, id(%v), uniqueid(%v), request(%+v), err(%v)", id, uniqueid, request, err)
 		return
@@ -338,14 +338,11 @@ func (d *dispatcher) appendRequest(ctx context.Context, id string, call *proto.C
 		return fmt.Errorf("active call failed, not support action(%v) current,id(%v), call(%+v)", call.Action, id, call)
 	}
 	req := call.SpecificRequest()
-	err := d.server.validate.Struct(req)
-	if err != nil {
+	if err := d.server.validate.Struct(req); err != nil {
 		log.Errorf("active call failed, validate  payload error(%v),id(%v),call(%+v)", checkValidatorError(err, call.Action), id, call)
 		return fmt.Errorf("active call failed, validate  payload error(%v),id(%v),call(%+v)", checkValidatorError(err, call.Action), id, call)
 	}
-	if err := d.requestQueueMap.pushRequset(id, &request{
-		call: call,
-	}); err != nil {
+	if err := d.requestQueueMap.pushRequset(id, &request{call: call}); err != nil {
 		return err
 	}
 	d.requestC <- id
