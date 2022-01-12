@@ -283,7 +283,7 @@ func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 	}
 	pendingReq, ok := ws.server.getPendingRequest(ws.id)
 	if !ok {
-		log.Errorf("ignoring this message may request have timed out or no request before,id(%v), wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallResult)
+		log.Errorf("ignoring this message, may be conn close,id(%v), wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallResult)
 		return
 	}
 	action := pendingReq.call.Action
@@ -383,7 +383,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 	}
 	pendingReq, ok := ws.server.getPendingRequest(ws.id)
 	if !ok {
-		log.Errorf("ignoring this message may request have timed out or no request before,id(%v), wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallError)
+		log.Errorf("ignoring this message, may be conn close,id(%v), wsmsg(%v),wsmsg_type(%v)", ws.id, string(wsmsg), CallError)
 		return
 	}
 	action := pendingReq.call.Action

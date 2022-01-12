@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	rpcx "ocpp16/plugin/rpcx"
-	registry "ocpp16/registry/rpcx"
+	registry "ocpp16/plugin/active/rpcx"
+	rpcx "ocpp16/plugin/passive/rpcx"
 
 	// "ocpp16/plugin/local"
 	"ocpp16/config"
@@ -90,6 +90,10 @@ func serve(c *cli.Context) error {
 	server.RegisterActionPlugin(rpcx.NewActionPlugin())
 	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
 	serveAddr, serveURI := fmt.Sprintf("%v:%v", conf.WebsocketAddr, conf.WebsocketPort), conf.WebsocketURI
-	server.Serve(serveAddr, serveURI)
+	if conf.TLSEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
+		server.ServeTLS(serveAddr, serveURI, conf.TLSCertificate, conf.TLSCertificateKey)
+	} else {
+		server.Serve(serveAddr, serveURI)
+	}
 	return nil
 }

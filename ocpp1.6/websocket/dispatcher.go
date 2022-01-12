@@ -29,17 +29,13 @@ func (r *request) String() string {
 }
 
 func newCallStateMap() *callStateMap {
-	return &callStateMap{
-		pendingCallState: make(map[string]*request),
-	}
+	return &callStateMap{pendingCallState: make(map[string]*request)}
 }
 
 func (m *callStateMap) createNewRequest(id string) {
 	m.Lock()
 	defer m.Unlock()
-	m.pendingCallState[id] = &request{
-		call: &proto.Call{},
-	}
+	m.pendingCallState[id] = &request{call: &proto.Call{}}
 }
 
 func (m *callStateMap) getPendingRequest(id string) (*request, bool) {
@@ -69,9 +65,7 @@ func (m *callStateMap) requestDone(id string, uniqueid string) {
 	m.Lock()
 	defer m.Unlock()
 	if req, ok := m.pendingCallState[id]; ok && req.call.UID() == uniqueid {
-		m.pendingCallState[id] = &request{
-			call: &proto.Call{},
-		}
+		m.pendingCallState[id] = &request{call: &proto.Call{}}
 	}
 }
 
@@ -81,9 +75,7 @@ type requestQueueMap struct {
 }
 
 func newRequesQueueMap() *requestQueueMap {
-	return &requestQueueMap{
-		queueMap: make(map[string]Queue),
-	}
+	return &requestQueueMap{queueMap: make(map[string]Queue)}
 }
 
 func (m *requestQueueMap) createNewQueue(id string) {
@@ -128,10 +120,11 @@ type dispatcher struct {
 	server          *Server
 	callStateMap    *callStateMap
 	requestQueueMap *requestQueueMap
+	timeout         time.Duration
 	requestC        chan string
 	nextReadyC      chan string
-	timeout         time.Duration
 	timeoutC        chan timeoutFlag
+	cancelC         chan string
 	stopC           chan error
 }
 
@@ -140,10 +133,11 @@ func NewDefaultDispatcher(s *Server) (d *dispatcher) {
 		server:          s,
 		callStateMap:    newCallStateMap(),
 		requestQueueMap: newRequesQueueMap(),
+		timeout:         time.Second * 5,
 		requestC:        make(chan string, 10),
 		nextReadyC:      make(chan string, 10),
-		timeout:         time.Second * 5,
 		timeoutC:        make(chan timeoutFlag),
+		cancelC:         make(chan string, 10),
 		stopC:           make(chan error),
 	}
 	go d.run()
@@ -184,15 +178,8 @@ func (d *dispatcher) run() {
 			log.Debugf("dispatcher has stopped")
 			return
 		case id = <-d.requestC:
-			q, ok = d.requestQueueMap.getQueue(id)
-			if !ok { //the connection may have been closed
-				if ctx, ok := contextMap[id]; ok { //this may happen when there has been a request but the connection has been closed
-					if ctx.isActive() {
-						ctx.cancel() //Cancel the timeout and notice exit the goroutine
-					}
-					delete(contextMap, id)
-				}
-				continue
+			if q, ok = d.requestQueueMap.getQueue(id); !ok {
+				continue //conn may be close
 			}
 			if ctx, ok = contextMap[id]; !ok { //the first request, so the write can be triggered
 				allow = true
@@ -217,11 +204,13 @@ func (d *dispatcher) run() {
 						MessageTypeID:    proto.CALL_ERROR,
 						UniqueID:         ctx.uniqueid,
 						ErrorCode:        proto.CallInternalError,
-						ErrorDescription: fmt.Sprintf("client response timeout,uniqueid(%v)", ctx.uniqueid),
+						ErrorDescription: fmt.Sprintf("center auto response due to device response timeout,uniqueid(%v)", ctx.uniqueid),
 						ErrorDetails:     nil,
 					})
 				}
 			}
+		case id := <-d.cancelC: //if the connection is closed,delete id from contextMap
+			delete(contextMap, id)
 		}
 		if allow && !q.IsEmpty() {
 			contextMap[id] = d.dispatchNextRequest(id)
@@ -233,6 +222,10 @@ func (d *dispatcher) run() {
 type timeoutFlag struct {
 	id       string
 	uniqueid string
+}
+
+func (d *dispatcher) cancelContext(id string) {
+	d.cancelC <- id
 }
 
 func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) {
@@ -286,9 +279,10 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 						id:       id,
 						uniqueid: uniqueid,
 					}
+					log.Debugf("response timeout,id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
 				default:
 					if _, ok := d.server.getConn(id); !ok {
-						log.Debugf("timeoutC has cancald due to connection close, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
+						log.Debugf("timeoutC has cancel due to connection close, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
 					} else {
 						log.Debugf("client success response, so timeoutC has cancald, id(%v), uniqueid(%v), request(%+v)", id, uniqueid, request)
 					}
@@ -315,12 +309,12 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 	}
 	request := req.(*request)
 	if request.call.UID() != uniqueid {
-		log.Errorf("requestid is not equal to uniqueid,maybe due to request timeout, id(%v), uniqueid(%v),latest request(%+v)", id, uniqueid, request)
+		log.Errorf("requestid is not equal to uniqueid,maybe due to request timeout, id(%v), requestid(%v), uniqueid(%v),latest request(%+v)", id, request.call.UID(), uniqueid, request)
 		return
 	}
 	requestQueue.Pop()
 	d.callStateMap.requestDone(id, uniqueid)
-	// log.Debug("request has already complete, id(%v), uniqueid(%v), request(%v)", id, uniqueid, request)
+	log.Debugf("request has already complete or other reasons(response timeout), id(%v), uniqueid(%v), request(%v)", id, uniqueid, request)
 	d.nextReadyC <- id
 }
 

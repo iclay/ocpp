@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	local "ocpp16/plugin/local"
+	local "ocpp16/plugin/passive/local"
 	"ocpp16/proto"
 	"reflect"
 	"strings"
 	"time"
 
-	// "github.com/gin-contrib/pprof"
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
@@ -40,10 +40,14 @@ func (s *Server) clientOnConnect(id string, ws *wsconn) {
 	s.registerConn(id, ws)
 }
 
+func (s *Server) cancelContex(id string) {
+	s.dispatcher.cancelContext(id)
+}
 func (s *Server) clientOnDisconnect(id string) {
 	s.deleteConn(id)
 	s.deleteDispatcherQueue(id)
 	s.deleteDispatcherCallState(id)
+	s.cancelContex(id)
 }
 
 func (s *Server) registerConn(id string, wsconn *wsconn) {
@@ -104,17 +108,15 @@ func (s *Server) RegisterActionPlugin(actionPlugin ActionPlugin) {
 
 var defaultServer = func() *Server {
 	s := &Server{
-		ginServer: gin.Default(),
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool { return true },
-		},
+		ginServer:     gin.Default(),
+		upgrader:      websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 		wsconns:       newWsconns(),
 		validate:      proto.Validate,
 		ocpp16map:     proto.OCPP16M,
 		ocppTypePools: typePools,
 		actionPlugin:  local.NewActionPlugin(), //default action plugin
 	}
-	// pprof.Register(s.ginServer)
+	pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
 	return s
@@ -145,6 +147,11 @@ func (c *Point) String() string {
 func (s *Server) Serve(addr string, path string) {
 	s.ginServer.GET(path, s.wsHandler)
 	s.ginServer.Run(addr)
+}
+
+func (s *Server) ServeTLS(addr string, path string, tlsCertificate string, tlsCertificateKey string) {
+	s.ginServer.GET(path, s.wsHandler)
+	s.ginServer.RunTLS(addr, tlsCertificate, tlsCertificateKey)
 }
 
 func (s *Server) wsHandler(c *gin.Context) {

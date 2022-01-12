@@ -12,19 +12,22 @@ import (
 
 //GConf The label name must be consistent with the configuration file, otherwise it cannot be resolved
 type GConf struct {
-	Include          string   `label:"include" parse_func:"parse_file"`
-	WebsocketAddr    string   `label:"websocket_addr"`
-	WebsocketPort    string   `label:"websocket_port"`
-	WebsocketURI     string   `label:"websocket_uri"`
-	HeartbeatTimeout int      `label:"heartbeat_timeout"`
-	ETCDList         []string `label:"etcd_list" parse_func:"parse_string_list"`
-	ETCDBasePath     string   `label:"etcd_base_path"`
-	UsePool          bool     `label:"use_pool"`
-	LogPath          string   `label:"log_path"`
-	RPCAddress       string   `label:"rpc_addr"`
-	LogLevel         string   `label:"log_level"` // trace, debug, info, warn[ing], error, fatal, panic
-	LogMaxDiskUsage  int64    `label:"log_max_disk_usage" parse_func:"parse_bytes"`
-	LogMaxFileNum    int64    `label:"log_max_file_num" parse_func:"parse_bytes"`
+	Include           string   `label:"include" parse_func:"parse_file"`
+	WebsocketAddr     string   `label:"websocket_addr"`
+	WebsocketPort     string   `label:"websocket_port"`
+	WebsocketURI      string   `label:"websocket_uri"`
+	HeartbeatTimeout  int      `label:"heartbeat_timeout"`
+	ETCDList          []string `label:"etcd_list" parse_func:"parse_string_list"`
+	ETCDBasePath      string   `label:"etcd_base_path"`
+	UsePool           bool     `label:"use_pool" parse_func:"parse_bool"`
+	TLSEnable         bool     `label:"tls_enable" parse_func:"parse_bool"`
+	TLSCertificate    string   `label:"tls_cert"`
+	TLSCertificateKey string   `label:"tls_key"`
+	LogPath           string   `label:"log_path"`
+	RPCAddress        string   `label:"rpc_addr"`
+	LogLevel          string   `label:"log_level"` // trace, debug, info, warn[ing], error, fatal, panic
+	LogMaxDiskUsage   int64    `label:"log_max_disk_usage" parse_func:"parse_bytes"`
+	LogMaxFileNum     int64    `label:"log_max_file_num" parse_func:"parse_bytes"`
 }
 
 var (
