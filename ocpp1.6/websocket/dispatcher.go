@@ -166,6 +166,7 @@ func (d *dispatcher) run() {
 		close(d.requestC)
 		close(d.nextReadyC)
 		close(d.timeoutC)
+		close(d.cancelC)
 		for _, timeoutCtx := range contextMap {
 			if timeoutCtx.isActive() {
 				timeoutCtx.cancel() //notify all timeout goroutine to exit
