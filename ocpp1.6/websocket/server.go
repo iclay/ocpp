@@ -177,13 +177,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 		return
 	}
 	//The protocol does not support
-	// if ocppProto == "" {
-	// 	log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
-	// 	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
-	// 		fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
-	// 	conn.Close()
-	// 	return
-	// }
+	if ocppProto == "" {
+		log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
+		conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
+			fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
+		conn.Close()
+		return
+	}
 	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
 	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
 	if s.connExists(p.String()) {
