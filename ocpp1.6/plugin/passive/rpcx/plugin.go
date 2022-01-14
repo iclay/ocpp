@@ -2,9 +2,10 @@ package rpcx
 
 import (
 	"context"
-	"github.com/smallnest/rpcx/client"
 	"ocpp16/config"
-	"ocpp16/proto"
+	"ocpp16/protocol"
+
+	"github.com/smallnest/rpcx/client"
 )
 
 type RPCXPlugin struct {
@@ -12,8 +13,8 @@ type RPCXPlugin struct {
 	basePath           string
 	chargingCore       client.XClient
 	smartCharging      client.XClient
-	requestHandlerMap  map[string]proto.RequestHandler
-	responseHandlerMap map[string]proto.ResponseHandler
+	requestHandlerMap  map[string]protocol.RequestHandler
+	responseHandlerMap map[string]protocol.ResponseHandler
 }
 
 func NewActionPlugin() *RPCXPlugin {
@@ -35,179 +36,210 @@ func (c *RPCXPlugin) init() {
 	c.smartCharging = client.NewXClient("SmartChargingClient", client.Failtry, client.RandomSelect, d2, client.DefaultOption)
 }
 
-func (c *RPCXPlugin) BootNotification(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.BootNotificationResponse{}
-	err := c.chargingCore.Call(ctx, "BootNotification", request.(*proto.BootNotificationRequest), reply)
+func (c *RPCXPlugin) BootNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.BootNotificationResponse{}
+	err := c.chargingCore.Call(ctx, "BootNotification", request.(*protocol.BootNotificationRequest), reply)
 	return reply, err
 }
 
-func (c *RPCXPlugin) StatusNotification(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.StatusNotificationResponse{}
-	err := c.chargingCore.Call(ctx, "StatusNotification", request.(*proto.StatusNotificationRequest), reply)
+func (c *RPCXPlugin) StatusNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.StatusNotificationResponse{}
+	err := c.chargingCore.Call(ctx, "StatusNotification", request.(*protocol.StatusNotificationRequest), reply)
 	return reply, err
 }
 
-func (c *RPCXPlugin) MeterValues(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.MeterValuesResponse{}
-	err := c.chargingCore.Call(ctx, "MeterValues", request.(*proto.MeterValuesRequest), reply)
+func (c *RPCXPlugin) MeterValues(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.MeterValuesResponse{}
+	err := c.chargingCore.Call(ctx, "MeterValues", request.(*protocol.MeterValuesRequest), reply)
 	return reply, err
 }
 
-func (c *RPCXPlugin) Authorize(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.AuthorizeResponse{}
-	err := c.chargingCore.Call(ctx, "Authorize", request.(*proto.AuthorizeRequest), reply)
+func (c *RPCXPlugin) Authorize(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.AuthorizeResponse{}
+	err := c.chargingCore.Call(ctx, "Authorize", request.(*protocol.AuthorizeRequest), reply)
 	return reply, err
 }
 
-func (c *RPCXPlugin) StartTransaction(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.StartTransactionResponse{}
-	err := c.chargingCore.Call(ctx, "StartTransaction", request.(*proto.StartTransactionRequest), reply)
+func (c *RPCXPlugin) StartTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.StartTransactionResponse{}
+	err := c.chargingCore.Call(ctx, "StartTransaction", request.(*protocol.StartTransactionRequest), reply)
 	return reply, err
 }
 
-func (c *RPCXPlugin) StopTransaction(ctx context.Context, request proto.Request) (proto.Response, error) {
-	reply := &proto.StopTransactionResponse{}
-	err := c.chargingCore.Call(ctx, "StopTransaction", request.(*proto.StopTransactionRequest), reply)
+func (c *RPCXPlugin) StopTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.StopTransactionResponse{}
+	err := c.chargingCore.Call(ctx, "StopTransaction", request.(*protocol.StopTransactionRequest), reply)
 	return reply, err
 }
 
-// func (c *RPCXPlugin) ChangeConfiguration(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.ChangeConfigurationResponse{}
-// 	err := c.chargingCore.Call(ctx, "ChangeConfiguration", request.(*proto.ChangeConfigurationRequest), reply)
+func (c *RPCXPlugin) ChargingPointOffline(id string) error {
+	type OfflineNotice struct {
+		ChargingPointIdentify string `json:"ChargingPointIdentify"`
+	}
+	req := &OfflineNotice{ChargingPointIdentify: id}
+	reply := &Reply{}
+	err := c.chargingCore.Call(context.TODO(), "ChargingPointOffline", req, reply)
+	return err
+}
+
+// func (c *RPCXPlugin) ChangeConfiguration(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.ChangeConfigurationResponse{}
+// 	err := c.chargingCore.Call(ctx, "ChangeConfiguration", request.(*protocol.ChangeConfigurationRequest), reply)
 // 	return reply, err
 // }
-// func (c *RPCXPlugin) DataTransfer(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.DataTransferResponse{}
-// 	err := c.chargingCore.Call(ctx, "DataTransfer", request.(*proto.DataTransferRequest), reply)
+// func (c *RPCXPlugin) DataTransfer(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.DataTransferResponse{}
+// 	err := c.chargingCore.Call(ctx, "DataTransfer", request.(*protocol.DataTransferRequest), reply)
 // 	return reply, err
 // }
 
-// func (c *RPCXPlugin) SetChargingProfile(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.SetChargingProfileResponse{}
-// 	err := c.chargingCore.Call(ctx, "SetChargingProfile", request.(*proto.SetChargingProfileRequest), reply)
+// func (c *RPCXPlugin) SetChargingProfile(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.SetChargingProfileResponse{}
+// 	err := c.chargingCore.Call(ctx, "SetChargingProfile", request.(*protocol.SetChargingProfileRequest), reply)
 // 	return reply, err
 // }
 
-// func (c *RPCXPlugin) RemoteStartTransaction(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.RemoteStartTransactionResponse{}
-// 	err := c.chargingCore.Call(ctx, "RemoteStartTransaction", request.(*proto.RemoteStartTransactionRequest), reply)
+// func (c *RPCXPlugin) RemoteStartTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.RemoteStartTransactionResponse{}
+// 	err := c.chargingCore.Call(ctx, "RemoteStartTransaction", request.(*protocol.RemoteStartTransactionRequest), reply)
 // 	return reply, err
 // }
 
-// func (c *RPCXPlugin) RemoteStopTransaction(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.RemoteStopTransactionResponse{}
-// 	err := c.chargingCore.Call(ctx, "RemoteStopTransaction", request.(*proto.RemoteStopTransactionRequest), reply)
+// func (c *RPCXPlugin) RemoteStopTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.RemoteStopTransactionResponse{}
+// 	err := c.chargingCore.Call(ctx, "RemoteStopTransaction", request.(*protocol.RemoteStopTransactionRequest), reply)
 // 	return reply, err
 // }
 
-// func (c *RPCXPlugin) Reset(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.ResetResponse{}
-// 	err := c.chargingCore.Call(ctx, "Reset", request.(*proto.ResetRequest), reply)
+// func (c *RPCXPlugin) Reset(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.ResetResponse{}
+// 	err := c.chargingCore.Call(ctx, "Reset", request.(*protocol.ResetRequest), reply)
 // 	return reply, err
 // }
 
-// func (c *RPCXPlugin) UnlockConnector(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.UnlockConnectorResponse{}
-// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*proto.UnlockConnectorRequest), reply)
+// func (c *RPCXPlugin) UnlockConnector(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.UnlockConnectorResponse{}
+// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*protocol.UnlockConnectorRequest), reply)
 // 	return reply, err
 // }
 
 func (c *RPCXPlugin) registerRequestHandler() {
-	c.requestHandlerMap = map[string]proto.RequestHandler{
-		proto.BootNotificationName:   proto.RequestHandler(c.BootNotification),
-		proto.StatusNotificationName: proto.RequestHandler(c.StatusNotification),
-		proto.MeterValuesName:        proto.RequestHandler(c.MeterValues),
-		proto.AuthorizeName:          proto.RequestHandler(c.Authorize),
-		proto.StartTransactionName:   proto.RequestHandler(c.StartTransaction),
-		proto.StopTransactionName:    proto.RequestHandler(c.StopTransaction),
-		// proto.ChangeConfigurationName:    proto.RequestHandler(c.ChangeConfiguration),
-		// proto.DataTransferName:           proto.RequestHandler(c.DataTransfer),
-		// proto.SetChargingProfileName:     proto.RequestHandler(c.SetChargingProfile),
-		// proto.RemoteStartTransactionName: proto.RequestHandler(c.RemoteStartTransaction),
-		// proto.RemoteStopTransactionName:  proto.RequestHandler(c.RemoteStopTransaction),
-		// proto.ResetName:                  proto.RequestHandler(c.Reset),
-		// proto.UnlockConnectorName:        proto.RequestHandler(c.UnlockConnector),
+	c.requestHandlerMap = map[string]protocol.RequestHandler{
+		protocol.BootNotificationName:   protocol.RequestHandler(c.BootNotification),
+		protocol.StatusNotificationName: protocol.RequestHandler(c.StatusNotification),
+		protocol.MeterValuesName:        protocol.RequestHandler(c.MeterValues),
+		protocol.AuthorizeName:          protocol.RequestHandler(c.Authorize),
+		protocol.StartTransactionName:   protocol.RequestHandler(c.StartTransaction),
+		protocol.StopTransactionName:    protocol.RequestHandler(c.StopTransaction),
+		// protocol.ChangeConfigurationName:    protocol.RequestHandler(c.ChangeConfiguration),
+		// protocol.DataTransferName:           protocol.RequestHandler(c.DataTransfer),
+		// protocol.SetChargingProfileName:     protocol.RequestHandler(c.SetChargingProfile),
+		// protocol.RemoteStartTransactionName: protocol.RequestHandler(c.RemoteStartTransaction),
+		// protocol.RemoteStopTransactionName:  protocol.RequestHandler(c.RemoteStopTransaction),
+		// protocol.ResetName:                  protocol.RequestHandler(c.Reset),
+		// protocol.UnlockConnectorName:        protocol.RequestHandler(c.UnlockConnector),
 	}
 }
 
 //RequestHandler represent device active request Center
-func (c *RPCXPlugin) RequestHandler(action string) (proto.RequestHandler, bool) {
+func (c *RPCXPlugin) RequestHandler(action string) (protocol.RequestHandler, bool) {
 	handler, ok := c.requestHandlerMap[action]
 	return handler, ok
 }
 
-// func (c *Client) UnlockConnector(ctx context.Context, request proto.Request) (proto.Response, error) {
-// 	reply := &proto.UnlockConnectorResponse{}
-// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*proto.UnlockConnectorRequest), reply)
+// func (c *Client) UnlockConnector(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+// 	reply := &protocol.UnlockConnectorResponse{}
+// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*protocol.UnlockConnectorRequest), reply)
 // 	return reply, err
 // }
 type Reply struct {
 	Err error
 }
 
-func (c *RPCXPlugin) ChangeConfigurationResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) ChangeConfigurationResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "ChangeConfigurationResponse", res.(*proto.ChangeConfigurationResponse), reply)
+	err := c.chargingCore.Call(ctx, "ChangeConfigurationResponse", res.(*protocol.ChangeConfigurationResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) DataTransferResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) DataTransferResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "DataTransferResponse", res.(*proto.DataTransferResponse), reply)
+	err := c.chargingCore.Call(ctx, "DataTransferResponse", res.(*protocol.DataTransferResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) RemoteStartTransactionResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) RemoteStartTransactionResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "RemoteStartTransactionResponse", res.(*proto.RemoteStartTransactionResponse), reply)
+	err := c.chargingCore.Call(ctx, "RemoteStartTransactionResponse", res.(*protocol.RemoteStartTransactionResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) ResetResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) ResetResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "ResetResponse", res.(*proto.ResetResponse), reply)
+	err := c.chargingCore.Call(ctx, "ResetResponse", res.(*protocol.ResetResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) RemoteStopTransactionResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) RemoteStopTransactionResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "RemoteStopTransactionResponse", res.(*proto.RemoteStopTransactionResponse), reply)
+	err := c.chargingCore.Call(ctx, "RemoteStopTransactionResponse", res.(*protocol.RemoteStopTransactionResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) UnlockConnectorResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) UnlockConnectorResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "UnlockConnectorResponse", res.(*proto.UnlockConnectorResponse), reply)
+	err := c.chargingCore.Call(ctx, "UnlockConnectorResponse", res.(*protocol.UnlockConnectorResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) CallError(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) SendLocalListResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "CallError", res.(*proto.CallError), reply)
+	err := c.chargingCore.Call(ctx, "SendLocalListResponse", res.(*protocol.SendLocalListResponse), reply)
 	return err
 }
 
-func (c *RPCXPlugin) SetChargingProfileResponse(ctx context.Context, res proto.Response) error {
+func (c *RPCXPlugin) GetLocalListVersionResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
-	err := c.smartCharging.Call(ctx, "SetChargingProfileResponse", res.(*proto.SetChargingProfileResponse), reply)
+	err := c.chargingCore.Call(ctx, "GetLocalListVersionResponse", res.(*protocol.GetLocalListVersionResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) GetConfigurationResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.chargingCore.Call(ctx, "GetConfigurationResponse", res.(*protocol.GetConfigurationResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) CallError(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.chargingCore.Call(ctx, "CallError", res.(*protocol.CallError), reply)
+	return err
+}
+
+func (c *RPCXPlugin) SetChargingProfileResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.smartCharging.Call(ctx, "SetChargingProfileResponse", res.(*protocol.SetChargingProfileResponse), reply)
 	return err
 }
 
 func (c *RPCXPlugin) registerResponseHandler() {
-	c.responseHandlerMap = map[string]proto.ResponseHandler{
-		proto.ChangeConfigurationName:    proto.ResponseHandler(c.ChangeConfigurationResponse),
-		proto.DataTransferName:           proto.ResponseHandler(c.DataTransferResponse),
-		proto.RemoteStartTransactionName: proto.ResponseHandler(c.RemoteStartTransactionResponse),
-		proto.ResetName:                  proto.ResponseHandler(c.ResetResponse),
-		proto.RemoteStopTransactionName:  proto.ResponseHandler(c.RemoteStopTransactionResponse),
-		proto.UnlockConnectorName:        proto.ResponseHandler(c.UnlockConnectorResponse),
-		proto.SetChargingProfileName:     proto.ResponseHandler(c.SetChargingProfileResponse),
-		proto.CallErrorName:              proto.ResponseHandler(c.CallError),
+	c.responseHandlerMap = map[string]protocol.ResponseHandler{
+		protocol.ChangeConfigurationName:    protocol.ResponseHandler(c.ChangeConfigurationResponse),
+		protocol.DataTransferName:           protocol.ResponseHandler(c.DataTransferResponse),
+		protocol.RemoteStartTransactionName: protocol.ResponseHandler(c.RemoteStartTransactionResponse),
+		protocol.ResetName:                  protocol.ResponseHandler(c.ResetResponse),
+		protocol.RemoteStopTransactionName:  protocol.ResponseHandler(c.RemoteStopTransactionResponse),
+		protocol.UnlockConnectorName:        protocol.ResponseHandler(c.UnlockConnectorResponse),
+		protocol.SendLocalListName:          protocol.ResponseHandler(c.SendLocalListResponse),
+		protocol.GetLocalListVersionName:    protocol.ResponseHandler(c.GetLocalListVersionResponse),
+		protocol.GetConfigurationName:       protocol.ResponseHandler(c.GetConfigurationResponse),
+		protocol.SetChargingProfileName:     protocol.ResponseHandler(c.SetChargingProfileResponse),
+		protocol.CallErrorName:              protocol.ResponseHandler(c.CallError),
 	}
 }
 
 //ResponseHandler represent The device reply to the center request
-func (c *RPCXPlugin) ResponseHandler(action string) (proto.ResponseHandler, bool) {
+func (c *RPCXPlugin) ResponseHandler(action string) (protocol.ResponseHandler, bool) {
 	handler, ok := c.responseHandlerMap[action]
 	return handler, ok
 }
