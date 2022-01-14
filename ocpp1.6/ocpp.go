@@ -5,9 +5,9 @@ import (
 	registry "ocpp16/plugin/active/rpcx"
 	rpcx "ocpp16/plugin/passive/rpcx"
 
-	// "ocpp16/plugin/local"
 	"ocpp16/config"
 	"ocpp16/logwriter"
+	// registry "ocpp16/plugin/active/local"
 	"ocpp16/websocket"
 	"os"
 	"time"

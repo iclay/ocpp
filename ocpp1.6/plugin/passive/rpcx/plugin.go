@@ -9,12 +9,16 @@ import (
 )
 
 type RPCXPlugin struct {
-	etcdAddr           []string
-	basePath           string
-	chargingCore       client.XClient
-	smartCharging      client.XClient
-	requestHandlerMap  map[string]protocol.RequestHandler
-	responseHandlerMap map[string]protocol.ResponseHandler
+	etcdAddr                []string
+	basePath                string
+	chargingCore            client.XClient
+	smartCharging           client.XClient
+	firmwareManagement      client.XClient
+	Reservation             client.XClient
+	RemoteTrigger           client.XClient
+	LocalAuthListManagement client.XClient
+	requestHandlerMap       map[string]protocol.RequestHandler
+	responseHandlerMap      map[string]protocol.ResponseHandler
 }
 
 func NewActionPlugin() *RPCXPlugin {
@@ -34,8 +38,17 @@ func (c *RPCXPlugin) init() {
 	c.chargingCore = client.NewXClient("ChargingCoreClient", client.Failtry, client.RandomSelect, d1, client.DefaultOption)
 	d2 := client.NewEtcdV3Discovery(c.basePath, "SmartChargingClient", c.etcdAddr, nil)
 	c.smartCharging = client.NewXClient("SmartChargingClient", client.Failtry, client.RandomSelect, d2, client.DefaultOption)
+	d3 := client.NewEtcdV3Discovery(c.basePath, "FirmwareManagementClient", c.etcdAddr, nil)
+	c.firmwareManagement = client.NewXClient("FirmwareManagementClient", client.Failtry, client.RandomSelect, d3, client.DefaultOption)
+	d4 := client.NewEtcdV3Discovery(c.basePath, "ReservationClient", c.etcdAddr, nil)
+	c.Reservation = client.NewXClient("ReservationClient", client.Failtry, client.RandomSelect, d4, client.DefaultOption)
+	d5 := client.NewEtcdV3Discovery(c.basePath, "RemoteTriggerClient", c.etcdAddr, nil)
+	c.RemoteTrigger = client.NewXClient("RemoteTriggerClient", client.Failtry, client.RandomSelect, d5, client.DefaultOption)
+	d6 := client.NewEtcdV3Discovery(c.basePath, "LocalAuthListManagementClient", c.etcdAddr, nil)
+	c.LocalAuthListManagement = client.NewXClient("LocalAuthListManagementClient", client.Failtry, client.RandomSelect, d6, client.DefaultOption)
 }
 
+// chargingCore - request
 func (c *RPCXPlugin) BootNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
 	reply := &protocol.BootNotificationResponse{}
 	err := c.chargingCore.Call(ctx, "BootNotification", request.(*protocol.BootNotificationRequest), reply)
@@ -82,62 +95,28 @@ func (c *RPCXPlugin) ChargingPointOffline(id string) error {
 	return err
 }
 
-// func (c *RPCXPlugin) ChangeConfiguration(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.ChangeConfigurationResponse{}
-// 	err := c.chargingCore.Call(ctx, "ChangeConfiguration", request.(*protocol.ChangeConfigurationRequest), reply)
-// 	return reply, err
-// }
-// func (c *RPCXPlugin) DataTransfer(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.DataTransferResponse{}
-// 	err := c.chargingCore.Call(ctx, "DataTransfer", request.(*protocol.DataTransferRequest), reply)
-// 	return reply, err
-// }
+// firmwareManagement - request
+func (c *RPCXPlugin) FirmwareStatusNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.FirmwareStatusNotificationResponse{}
+	err := c.firmwareManagement.Call(ctx, "FirmwareStatusNotification", request.(*protocol.FirmwareStatusNotificationRequest), reply)
+	return reply, err
+}
 
-// func (c *RPCXPlugin) SetChargingProfile(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.SetChargingProfileResponse{}
-// 	err := c.chargingCore.Call(ctx, "SetChargingProfile", request.(*protocol.SetChargingProfileRequest), reply)
-// 	return reply, err
-// }
-
-// func (c *RPCXPlugin) RemoteStartTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.RemoteStartTransactionResponse{}
-// 	err := c.chargingCore.Call(ctx, "RemoteStartTransaction", request.(*protocol.RemoteStartTransactionRequest), reply)
-// 	return reply, err
-// }
-
-// func (c *RPCXPlugin) RemoteStopTransaction(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.RemoteStopTransactionResponse{}
-// 	err := c.chargingCore.Call(ctx, "RemoteStopTransaction", request.(*protocol.RemoteStopTransactionRequest), reply)
-// 	return reply, err
-// }
-
-// func (c *RPCXPlugin) Reset(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.ResetResponse{}
-// 	err := c.chargingCore.Call(ctx, "Reset", request.(*protocol.ResetRequest), reply)
-// 	return reply, err
-// }
-
-// func (c *RPCXPlugin) UnlockConnector(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.UnlockConnectorResponse{}
-// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*protocol.UnlockConnectorRequest), reply)
-// 	return reply, err
-// }
+func (c *RPCXPlugin) DiagnosticsStatusNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.DiagnosticsStatusNotificationResponse{}
+	err := c.firmwareManagement.Call(ctx, "DiagnosticsStatusNotification", request.(*protocol.DiagnosticsStatusNotificationRequest), reply)
+	return reply, err
+}
 
 func (c *RPCXPlugin) registerRequestHandler() {
 	c.requestHandlerMap = map[string]protocol.RequestHandler{
-		protocol.BootNotificationName:   protocol.RequestHandler(c.BootNotification),
-		protocol.StatusNotificationName: protocol.RequestHandler(c.StatusNotification),
-		protocol.MeterValuesName:        protocol.RequestHandler(c.MeterValues),
-		protocol.AuthorizeName:          protocol.RequestHandler(c.Authorize),
-		protocol.StartTransactionName:   protocol.RequestHandler(c.StartTransaction),
-		protocol.StopTransactionName:    protocol.RequestHandler(c.StopTransaction),
-		// protocol.ChangeConfigurationName:    protocol.RequestHandler(c.ChangeConfiguration),
-		// protocol.DataTransferName:           protocol.RequestHandler(c.DataTransfer),
-		// protocol.SetChargingProfileName:     protocol.RequestHandler(c.SetChargingProfile),
-		// protocol.RemoteStartTransactionName: protocol.RequestHandler(c.RemoteStartTransaction),
-		// protocol.RemoteStopTransactionName:  protocol.RequestHandler(c.RemoteStopTransaction),
-		// protocol.ResetName:                  protocol.RequestHandler(c.Reset),
-		// protocol.UnlockConnectorName:        protocol.RequestHandler(c.UnlockConnector),
+		protocol.BootNotificationName:           protocol.RequestHandler(c.BootNotification),
+		protocol.StatusNotificationName:         protocol.RequestHandler(c.StatusNotification),
+		protocol.MeterValuesName:                protocol.RequestHandler(c.MeterValues),
+		protocol.AuthorizeName:                  protocol.RequestHandler(c.Authorize),
+		protocol.StartTransactionName:           protocol.RequestHandler(c.StartTransaction),
+		protocol.StopTransactionName:            protocol.RequestHandler(c.StopTransaction),
+		protocol.FirmwareStatusNotificationName: protocol.RequestHandler(c.FirmwareStatusNotification),
 	}
 }
 
@@ -147,15 +126,11 @@ func (c *RPCXPlugin) RequestHandler(action string) (protocol.RequestHandler, boo
 	return handler, ok
 }
 
-// func (c *Client) UnlockConnector(ctx context.Context, request protocol.Request) (protocol.Response, error) {
-// 	reply := &protocol.UnlockConnectorResponse{}
-// 	err := c.chargingCore.Call(ctx, "UnlockConnector", request.(*protocol.UnlockConnectorRequest), reply)
-// 	return reply, err
-// }
 type Reply struct {
 	Err error
 }
 
+// chargingCore-response
 func (c *RPCXPlugin) ChangeConfigurationResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
 	err := c.chargingCore.Call(ctx, "ChangeConfigurationResponse", res.(*protocol.ChangeConfigurationResponse), reply)
@@ -192,18 +167,6 @@ func (c *RPCXPlugin) UnlockConnectorResponse(ctx context.Context, res protocol.R
 	return err
 }
 
-func (c *RPCXPlugin) SendLocalListResponse(ctx context.Context, res protocol.Response) error {
-	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "SendLocalListResponse", res.(*protocol.SendLocalListResponse), reply)
-	return err
-}
-
-func (c *RPCXPlugin) GetLocalListVersionResponse(ctx context.Context, res protocol.Response) error {
-	reply := &Reply{}
-	err := c.chargingCore.Call(ctx, "GetLocalListVersionResponse", res.(*protocol.GetLocalListVersionResponse), reply)
-	return err
-}
-
 func (c *RPCXPlugin) GetConfigurationResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
 	err := c.chargingCore.Call(ctx, "GetConfigurationResponse", res.(*protocol.GetConfigurationResponse), reply)
@@ -216,9 +179,69 @@ func (c *RPCXPlugin) CallError(ctx context.Context, res protocol.Response) error
 	return err
 }
 
+// smartCharging - repsonse
 func (c *RPCXPlugin) SetChargingProfileResponse(ctx context.Context, res protocol.Response) error {
 	reply := &Reply{}
 	err := c.smartCharging.Call(ctx, "SetChargingProfileResponse", res.(*protocol.SetChargingProfileResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) ClearChargingProfileResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.smartCharging.Call(ctx, "ClearChargingProfileResponse", res.(*protocol.ClearChargingProfileResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) GetCompositeScheduleResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.smartCharging.Call(ctx, "GetCompositeScheduleResponse", res.(*protocol.GetCompositeScheduleResponse), reply)
+	return err
+}
+
+// firmwareManagement - response
+func (c *RPCXPlugin) GetDiagnosticsResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.firmwareManagement.Call(ctx, "GetDiagnosticsResponse", res.(*protocol.GetDiagnosticsResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) UpdateFirmWareResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.firmwareManagement.Call(ctx, "UpdateFirmWareResponse", res.(*protocol.UpdateFirmwareResponse), reply)
+	return err
+}
+
+//Reservation - response
+
+func (c *RPCXPlugin) ReserveNowResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.Reservation.Call(ctx, "ReserveNowResponse", res.(*protocol.ReserveNowResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) CancelReservationResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.Reservation.Call(ctx, "CancelReservationResponse", res.(*protocol.CancelReservationResponse), reply)
+	return err
+}
+
+//RemoteTrigger -response
+func (c *RPCXPlugin) TriggerMessageResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.RemoteTrigger.Call(ctx, "TriggerMessageResponse", res.(*protocol.TriggerMessageResponse), reply)
+	return err
+}
+
+//LocalAuthListManagement -response
+func (c *RPCXPlugin) SendLocalListResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.LocalAuthListManagement.Call(ctx, "SendLocalListResponse", res.(*protocol.SendLocalListResponse), reply)
+	return err
+}
+
+func (c *RPCXPlugin) GetLocalListVersionResponse(ctx context.Context, res protocol.Response) error {
+	reply := &Reply{}
+	err := c.LocalAuthListManagement.Call(ctx, "GetLocalListVersionResponse", res.(*protocol.GetLocalListVersionResponse), reply)
 	return err
 }
 
@@ -230,10 +253,17 @@ func (c *RPCXPlugin) registerResponseHandler() {
 		protocol.ResetName:                  protocol.ResponseHandler(c.ResetResponse),
 		protocol.RemoteStopTransactionName:  protocol.ResponseHandler(c.RemoteStopTransactionResponse),
 		protocol.UnlockConnectorName:        protocol.ResponseHandler(c.UnlockConnectorResponse),
-		protocol.SendLocalListName:          protocol.ResponseHandler(c.SendLocalListResponse),
-		protocol.GetLocalListVersionName:    protocol.ResponseHandler(c.GetLocalListVersionResponse),
 		protocol.GetConfigurationName:       protocol.ResponseHandler(c.GetConfigurationResponse),
 		protocol.SetChargingProfileName:     protocol.ResponseHandler(c.SetChargingProfileResponse),
+		protocol.ClearChargingProfileName:   protocol.ResponseHandler(c.ClearChargingProfileResponse),
+		protocol.GetCompositeScheduleName:   protocol.ResponseHandler(c.GetCompositeScheduleResponse),
+		protocol.ReserveNowName:             protocol.ResponseHandler(c.ReserveNowResponse),
+		protocol.CancelReservationName:      protocol.ResponseHandler(c.CancelReservationResponse),
+		protocol.TriggerMessageName:         protocol.ResponseHandler(c.TriggerMessageResponse),
+		protocol.SendLocalListName:          protocol.ResponseHandler(c.SendLocalListResponse),
+		protocol.GetLocalListVersionName:    protocol.ResponseHandler(c.GetLocalListVersionResponse),
+		protocol.GetDiagnosticsName:         protocol.ResponseHandler(c.GetDiagnosticsResponse),
+		protocol.UpdateFirmwareName:         protocol.ResponseHandler(c.UpdateFirmWareResponse),
 		protocol.CallErrorName:              protocol.ResponseHandler(c.CallError),
 	}
 }

@@ -55,6 +55,28 @@ func (c *Call) SpecificRequest() Request {
 		c.Request = c.Request.(GetLocalListVersionRequest)
 	case GetConfigurationRequest:
 		c.Request = c.Request.(GetConfigurationRequest)
+	case FirmwareStatusNotificationRequest:
+		c.Request = c.Request.(FirmwareStatusNotificationRequest)
+	case DiagnosticsStatusNotificationRequest:
+		c.Request = c.Request.(DiagnosticsStatusNotificationRequest)
+	case ChangeAvailabilityRequest:
+		c.Request = c.Request.(ChangeAvailabilityRequest)
+	case ClearCacheRequest:
+		c.Request = c.Request.(ClearCacheRequest)
+	case GetCompositeScheduleRequest:
+		c.Request = c.Request.(GetCompositeScheduleRequest)
+	case ClearChargingProfileRequest:
+		c.Request = c.Request.(ClearChargingProfileRequest)
+	case CancelReservationRequest:
+		c.Request = c.Request.(CancelReservationRequest)
+	case ReserveNowRequest:
+		c.Request = c.Request.(ReserveNowRequest)
+	case TriggerMessageRequest:
+		c.Request = c.Request.(TriggerMessageRequest)
+	case UpdateFirmwareRequest:
+		c.Request = c.Request.(UpdateFirmwareRequest)
+	case GetDiagnosticsRequest:
+		c.Request = c.Request.(GetDiagnosticsRequest)
 	default:
 	}
 	return c.Request

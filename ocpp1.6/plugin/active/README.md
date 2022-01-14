@@ -9,5 +9,6 @@ The plug-in acts on the active request device side of the service center. It mus
 
 ## support
 - [x] current implementation
+  - [x] LocalService  
   - [x] RPCX
 

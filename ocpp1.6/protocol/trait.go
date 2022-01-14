@@ -25,6 +25,17 @@ func init() {
 		SendLocalListTrait{},
 		GetLocalListVersionTrait{},
 		GetConfigurationTrait{},
+		FirmwareStatusNotificationTrait{},
+		DiagnosticsStatusNotificationTrait{},
+		ChangeAvailabilityTrait{},
+		ClearCacheTrait{},
+		GetCompositeScheduleTrait{},
+		ClearChargingProfileTrait{},
+		CancelReservationTrait{},
+		ReserveNowNameTrait{},
+		TriggerMessageTrait{},
+		UpdateFirmwareTrait{},
+		GetDiagnosticsTrait{},
 	)
 }
 
@@ -332,4 +343,171 @@ func (GetConfigurationTrait) RequestType() reflect.Type {
 
 func (GetConfigurationTrait) ResponseType() reflect.Type {
 	return reflect.TypeOf(GetConfigurationResponse{})
+}
+
+//FirmwareStatusNotification
+type FirmwareStatusNotificationTrait struct{}
+
+func (FirmwareStatusNotificationTrait) Action() string {
+	return FirmwareStatusNotificationName
+}
+
+func (FirmwareStatusNotificationTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(FirmwareStatusNotificationRequest{})
+}
+
+func (FirmwareStatusNotificationTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(FirmwareStatusNotificationResponse{})
+}
+
+//DiagnosticsStatusNotification
+type DiagnosticsStatusNotificationTrait struct{}
+
+func (DiagnosticsStatusNotificationTrait) Action() string {
+	return DiagnosticsStatusNotificationName
+}
+
+func (DiagnosticsStatusNotificationTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(DiagnosticsStatusNotificationRequest{})
+}
+
+func (DiagnosticsStatusNotificationTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(DiagnosticsStatusNotificationResponse{})
+}
+
+//ChangeAvailability
+type ChangeAvailabilityTrait struct{}
+
+func (ChangeAvailabilityTrait) Action() string {
+	return ChangeAvailabilityName
+}
+
+func (ChangeAvailabilityTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(ChangeAvailabilityRequest{})
+}
+
+func (ChangeAvailabilityTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(ChangeAvailabilityResponse{})
+}
+
+//ClearCache
+type ClearCacheTrait struct{}
+
+func (ClearCacheTrait) Action() string {
+	return ClearCacheName
+}
+
+func (ClearCacheTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(ClearCacheRequest{})
+}
+
+func (ClearCacheTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(ClearCacheResponse{})
+}
+
+// GetCompositeSchedule
+type GetCompositeScheduleTrait struct{}
+
+func (GetCompositeScheduleTrait) Action() string {
+	return GetCompositeScheduleName
+}
+
+func (GetCompositeScheduleTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(GetCompositeScheduleRequest{})
+}
+
+func (GetCompositeScheduleTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(GetCompositeScheduleResponse{})
+}
+
+//  ClearChargingProfile
+type ClearChargingProfileTrait struct{}
+
+func (ClearChargingProfileTrait) Action() string {
+	return ClearChargingProfileName
+}
+
+func (ClearChargingProfileTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(ClearChargingProfileRequest{})
+}
+
+func (ClearChargingProfileTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(ClearChargingProfileResponse{})
+}
+
+//  CancelReservation
+type CancelReservationTrait struct{}
+
+func (CancelReservationTrait) Action() string {
+	return CancelReservationName
+}
+
+func (CancelReservationTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(CancelReservationRequest{})
+}
+
+func (CancelReservationTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(CancelReservationResponse{})
+}
+
+//  ReserveNowName
+type ReserveNowNameTrait struct{}
+
+func (ReserveNowNameTrait) Action() string {
+	return ReserveNowName
+}
+
+func (ReserveNowNameTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(ReserveNowRequest{})
+}
+
+func (ReserveNowNameTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(ReserveNowResponse{})
+}
+
+// TriggerMessage
+type TriggerMessageTrait struct{}
+
+func (TriggerMessageTrait) Action() string {
+	return TriggerMessageName
+}
+
+func (TriggerMessageTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(TriggerMessageRequest{})
+}
+
+func (TriggerMessageTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(TriggerMessageResponse{})
+}
+
+// UpdateFirmware
+
+type UpdateFirmwareTrait struct{}
+
+func (UpdateFirmwareTrait) Action() string {
+	return UpdateFirmwareName
+}
+
+func (UpdateFirmwareTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(UpdateFirmwareRequest{})
+}
+
+func (UpdateFirmwareTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(UpdateFirmwareResponse{})
+}
+
+//GetDiagnostics
+
+type GetDiagnosticsTrait struct{}
+
+func (GetDiagnosticsTrait) Action() string {
+	return GetDiagnosticsName
+}
+
+func (GetDiagnosticsTrait) RequestType() reflect.Type {
+	return reflect.TypeOf(GetDiagnosticsRequest{})
+}
+
+func (GetDiagnosticsTrait) ResponseType() reflect.Type {
+	return reflect.TypeOf(GetDiagnosticsResponse{})
 }

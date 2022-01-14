@@ -6,26 +6,6 @@ import (
 
 func init() {
 
-	Validate.RegisterValidation("chargingRateUnit", func(f validator.FieldLevel) bool {
-		typ := ChargingRateUnitType(f.Field().String())
-		switch typ {
-		case uintTypeA, uintTypeW:
-			return true
-		default:
-			return false
-		}
-	})
-
-	Validate.RegisterValidation("chargingProfilePurpose", func(f validator.FieldLevel) bool {
-		purpose := ChargingProfilePurposeType(f.Field().String())
-		switch purpose {
-		case chargePointMaxProfile, txDefaultProfile, txProfile:
-			return true
-		default:
-			return false
-		}
-	})
-
 	Validate.RegisterValidation("chargingProfileKind", func(f validator.FieldLevel) bool {
 		kind := ChargingProfileKindType(f.Field().String())
 		switch kind {
@@ -59,17 +39,11 @@ func init() {
 }
 
 type (
-	ChargingRateUnitType       string
-	ChargingProfileKindType    string
-	ChargingProfilePurposeType string
-	RecurrencyKindType         string
-	RemoteStartStatus          string
+	ChargingProfileKindType string
+	RecurrencyKindType      string
+	RemoteStartStatus       string
 )
 
-const (
-	uintTypeA ChargingRateUnitType = "A"
-	uintTypeW ChargingRateUnitType = "W"
-)
 const (
 	daily  RecurrencyKindType = "Daily"
 	weekly RecurrencyKindType = "Weekly"
@@ -79,26 +53,6 @@ const (
 	recurring ChargingProfileKindType = "Recurring"
 	relative  ChargingProfileKindType = "Relative"
 )
-
-const (
-	chargePointMaxProfile ChargingProfilePurposeType = "ChargePointMaxProfile"
-	txDefaultProfile      ChargingProfilePurposeType = "TxDefaultProfile"
-	txProfile             ChargingProfilePurposeType = "TxProfile"
-)
-
-type ChargingSchedulePeriod struct {
-	StartPeriod  int     `json:"startPeriod" validate:"required,gte=0"`
-	Limit        float64 `json:"limit" validate:"required,gte=0"`
-	NumberPhases int     `json:"numberPhases,omitempty" validate:"omitempty,gte=0"`
-}
-
-type ChargingSchedule struct {
-	Duration               int                      `json:"duration,omitempty" validate:"omitempty,gte=0"`
-	StartSchedule          string                   `json:"startSchedule,omitempty" validate:"omitempty"`
-	ChargingRateUnit       ChargingRateUnitType     `json:"chargingRateUnit" validate:"required,chargingRateUnit"`
-	ChargingSchedulePeriod []ChargingSchedulePeriod `json:"chargingSchedulePeriod" validate:"required,min=1"`
-	MinChargingRate        float64                  `json:"minChargingRate,omitempty" validate:"omitempty"`
-}
 
 type ChargingProfile struct {
 	ChargingProfiled       int                        `json:"chargingProfileId" validate:"required"`

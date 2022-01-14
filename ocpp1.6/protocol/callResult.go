@@ -54,6 +54,28 @@ func (cr *CallResult) SpecificResponse() Response {
 		cr.Response = cr.Response.(GetLocalListVersionResponse)
 	case GetConfigurationResponse:
 		cr.Response = cr.Response.(GetConfigurationResponse)
+	case FirmwareStatusNotificationResponse:
+		cr.Response = cr.Response.(FirmwareStatusNotificationResponse)
+	case DiagnosticsStatusNotificationResponse:
+		cr.Response = cr.Response.(DiagnosticsStatusNotificationResponse)
+	case ChangeAvailabilityResponse:
+		cr.Response = cr.Response.(ChangeAvailabilityResponse)
+	case ClearCacheResponse:
+		cr.Response = cr.Response.(ClearCacheResponse)
+	case GetCompositeScheduleResponse:
+		cr.Response = cr.Response.(GetCompositeScheduleResponse)
+	case ClearChargingProfileResponse:
+		cr.Response = cr.Response.(ClearChargingProfileResponse)
+	case CancelReservationResponse:
+		cr.Response = cr.Response.(CancelReservationResponse)
+	case ReserveNowResponse:
+		cr.Response = cr.Response.(ReserveNowResponse)
+	case TriggerMessageResponse:
+		cr.Response = cr.Response.(TriggerMessageResponse)
+	case UpdateFirmwareResponse:
+		cr.Response = cr.Response.(UpdateFirmwareResponse)
+	case GetDiagnosticsResponse:
+		cr.Response = cr.Response.(GetDiagnosticsResponse)
 	default:
 	}
 	return cr.Response
