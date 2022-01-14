@@ -87,7 +87,16 @@ func serve(c *cli.Context) error {
 	lg := initLogger()
 	websocket.SetLogger(lg)
 	server := websocket.NewDefaultServer()
-	server.RegisterActionPlugin(rpcx.NewActionPlugin())
+	actionPlugin := rpcx.NewActionPlugin()
+	server.RegisterActionPlugin(actionPlugin)
+	server.ClientOnHandler(func(id string) error {
+		lg.Debugf("id(%v) connect,time(%v)", id, time.Now().Format(time.RFC3339))
+		return nil
+	})
+	server.ClientOnDisConnetHandler(func(id string) error {
+		lg.Debugf("id(%v) disconnect,time(%v)", id, time.Now().Format(time.RFC3339))
+		return nil
+	}, actionPlugin.ChargingPointOffline)
 	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
 	serveAddr, serveURI := fmt.Sprintf("%v:%v", conf.WebsocketAddr, conf.WebsocketPort), conf.WebsocketURI
 	if conf.TLSEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {

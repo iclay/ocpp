@@ -3,19 +3,21 @@ package rpcx
 import (
 	"context"
 	"fmt"
+	"ocpp16/config"
+	"ocpp16/protocol"
+	"ocpp16/websocket"
+	"time"
+
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/smallnest/rpcx/server"
 	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
-	"ocpp16/config"
-	"ocpp16/proto"
-	"ocpp16/websocket"
-	"time"
 )
 
 type ActiveCallServer struct {
-	ChargingCore  *ChargingCoreServer
-	SmartCharging *SmartChargingServer
+	ChargingCore            *ChargingCoreServer
+	SmartCharging           *SmartChargingServer
+	LocalAuthListManagement *LocalAuthListManagementServer
 }
 
 type ChargingCoreServer struct {
@@ -26,10 +28,15 @@ type SmartChargingServer struct {
 	handler websocket.ActiveCallHandler
 }
 
+type LocalAuthListManagementServer struct {
+	handler websocket.ActiveCallHandler
+}
+
 func NewActiveCallPlugin(handler websocket.ActiveCallHandler) {
 	s := &ActiveCallServer{
-		ChargingCore:  &ChargingCoreServer{handler: handler},
-		SmartCharging: &SmartChargingServer{handler: handler},
+		ChargingCore:            &ChargingCoreServer{handler: handler},
+		SmartCharging:           &SmartChargingServer{handler: handler},
+		LocalAuthListManagement: &LocalAuthListManagementServer{handler: handler},
 	}
 	go s.run()
 }
@@ -57,17 +64,18 @@ type Reply struct {
 	Err error
 }
 
-func (o *ChargingCoreServer) ActiveChangeConfiguration(ctx context.Context, req *proto.ChangeConfigurationRequest, res *Reply) error {
+//ChargingCore
+func (o *ChargingCoreServer) ActiveChangeConfiguration(ctx context.Context, req *protocol.ChangeConfigurationRequest, res *Reply) error {
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveChangeConfiguration error: req  or res nil, req(%+v), res(%+v)", req, res)
 	}
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.ChangeConfigurationName,
+		Action:        protocol.ChangeConfigurationName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -75,7 +83,7 @@ func (o *ChargingCoreServer) ActiveChangeConfiguration(ctx context.Context, req 
 	return err
 }
 
-func (o *ChargingCoreServer) ActiveDataTransfer(ctx context.Context, req *proto.DataTransferRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveDataTransfer(ctx context.Context, req *protocol.DataTransferRequest, res *Reply) error {
 
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveDataTransfer error: req  or res nil, req(%+v), res(%+v)", req, res)
@@ -83,10 +91,10 @@ func (o *ChargingCoreServer) ActiveDataTransfer(ctx context.Context, req *proto.
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.DataTransferName,
+		Action:        protocol.DataTransferName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -94,7 +102,7 @@ func (o *ChargingCoreServer) ActiveDataTransfer(ctx context.Context, req *proto.
 	return err
 }
 
-func (o *ChargingCoreServer) ActiveRemoteStartTransaction(ctx context.Context, req *proto.RemoteStartTransactionRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveRemoteStartTransaction(ctx context.Context, req *protocol.RemoteStartTransactionRequest, res *Reply) error {
 
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveRemoteStartTransaction error: req  or res nil, req(%+v), res(%+v)", req, res)
@@ -102,10 +110,10 @@ func (o *ChargingCoreServer) ActiveRemoteStartTransaction(ctx context.Context, r
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.RemoteStartTransactionName,
+		Action:        protocol.RemoteStartTransactionName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -114,7 +122,7 @@ func (o *ChargingCoreServer) ActiveRemoteStartTransaction(ctx context.Context, r
 
 }
 
-func (o *ChargingCoreServer) ActiveRemoteStopTransaction(ctx context.Context, req *proto.RemoteStopTransactionRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveRemoteStopTransaction(ctx context.Context, req *protocol.RemoteStopTransactionRequest, res *Reply) error {
 
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveRemoteStopTransaction error: req  or res nil, req(%+v), res(%+v)", req, res)
@@ -122,10 +130,10 @@ func (o *ChargingCoreServer) ActiveRemoteStopTransaction(ctx context.Context, re
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.RemoteStopTransactionName,
+		Action:        protocol.RemoteStopTransactionName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -133,7 +141,7 @@ func (o *ChargingCoreServer) ActiveRemoteStopTransaction(ctx context.Context, re
 	return err
 }
 
-func (o *ChargingCoreServer) ActiveUnlockConnector(ctx context.Context, req *proto.UnlockConnectorRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveUnlockConnector(ctx context.Context, req *protocol.UnlockConnectorRequest, res *Reply) error {
 
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveUnlockConnector error: req  or res nil, req(%+v), res(%+v)", req, res)
@@ -141,10 +149,10 @@ func (o *ChargingCoreServer) ActiveUnlockConnector(ctx context.Context, req *pro
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.UnlockConnectorName,
+		Action:        protocol.UnlockConnectorName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -152,17 +160,17 @@ func (o *ChargingCoreServer) ActiveUnlockConnector(ctx context.Context, req *pro
 	return err
 }
 
-func (o *ChargingCoreServer) ActiveReset(ctx context.Context, req *proto.ResetRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveReset(ctx context.Context, req *protocol.ResetRequest, res *Reply) error {
 	if req == nil || res == nil {
 		return fmt.Errorf("ActiveReset error: req  or res nil, req(%+v), res(%+v)", req, res)
 	}
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.ResetName,
+		Action:        protocol.ResetName,
 		Request:       *req,
 	}
 	err := o.handler(ctx, id, &call)
@@ -171,17 +179,74 @@ func (o *ChargingCoreServer) ActiveReset(ctx context.Context, req *proto.ResetRe
 
 }
 
-func (s *SmartChargingServer) ActiveSetChargingProfile(ctx context.Context, req *proto.SetChargingProfileRequest, res *Reply) error {
+func (o *ChargingCoreServer) ActiveGetConfiguration(ctx context.Context, req *protocol.GetConfigurationRequest, res *Reply) error {
 	if req == nil || res == nil {
-		return fmt.Errorf("ActiveReset error: req  or res nil, req(%+v), res(%+v)", req, res)
+		return fmt.Errorf("ActiveGetConfiguration error: req  or res nil, req(%+v), res(%+v)", req, res)
 	}
 	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
 	var uniqueid, id string
 	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
-	call := proto.Call{
-		MessageTypeID: proto.CALL,
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
 		UniqueID:      uniqueid,
-		Action:        proto.SetChargingProfileName,
+		Action:        protocol.GetConfigurationName,
+		Request:       *req,
+	}
+	err := o.handler(ctx, id, &call)
+	res.Err = err
+	return err
+}
+
+//SmartCharging
+func (s *SmartChargingServer) ActiveSetChargingProfile(ctx context.Context, req *protocol.SetChargingProfileRequest, res *Reply) error {
+	if req == nil || res == nil {
+		return fmt.Errorf("ActiveSetChargingProfile error: req  or res nil, req(%+v), res(%+v)", req, res)
+	}
+	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
+	var uniqueid, id string
+	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
+		UniqueID:      uniqueid,
+		Action:        protocol.SetChargingProfileName,
+		Request:       *req,
+	}
+	err := s.handler(ctx, id, &call)
+	res.Err = err
+	return err
+}
+
+//LocalAuthListManagement
+
+func (s *LocalAuthListManagementServer) ActiveGetLocalListVersion(ctx context.Context, req *protocol.GetLocalListVersionRequest, res *Reply) error {
+	if req == nil || res == nil {
+		return fmt.Errorf("ActiveGetLocalListVersion error: req  or res nil, req(%+v), res(%+v)", req, res)
+	}
+	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
+	var uniqueid, id string
+	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
+		UniqueID:      uniqueid,
+		Action:        protocol.GetLocalListVersionName,
+		Request:       *req,
+	}
+	err := s.handler(ctx, id, &call)
+	res.Err = err
+	return err
+}
+
+func (s *LocalAuthListManagementServer) ActiveSendLocalList(ctx context.Context, req *protocol.SendLocalListRequest, res *Reply) error {
+	if req == nil || res == nil {
+		return fmt.Errorf("ActiveSendLocalList error: req  or res nil, req(%+v), res(%+v)", req, res)
+	}
+	m := ctx.Value(share.ReqMetaDataKey).(map[string]string)
+	var uniqueid, id string
+	id, uniqueid = m["chargingPointIdentify"], m["messageId"]
+	call := protocol.Call{
+		MessageTypeID: protocol.CALL,
+		UniqueID:      uniqueid,
+		Action:        protocol.SendLocalListName,
 		Request:       *req,
 	}
 	err := s.handler(ctx, id, &call)

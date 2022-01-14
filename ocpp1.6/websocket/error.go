@@ -2,13 +2,13 @@ package websocket
 
 import (
 	"fmt"
-	"ocpp16/proto"
+	"ocpp16/protocol"
 
 	validator "github.com/go-playground/validator/v10"
 )
 
 type Error struct {
-	ErrorCode        proto.ErrCodeType
+	ErrorCode        protocol.ErrCodeType
 	ErrorDescription string
 	ErrorDetails     interface{}
 }
@@ -19,7 +19,7 @@ func (e *Error) Error() string {
 
 func occurenceConstraintViolation(fieldError validator.FieldError, action string) *Error {
 	return &Error{
-		ErrorCode:        proto.OccurenceConstraintViolation,
+		ErrorCode:        protocol.OccurenceConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v must required but it seems to have been omitted", action, fieldError.Namespace()),
 		ErrorDetails:     nil,
 	}
@@ -27,21 +27,21 @@ func occurenceConstraintViolation(fieldError validator.FieldError, action string
 
 func genericError(fieldErrors validator.ValidationErrors, action string) *Error {
 	return &Error{
-		ErrorCode:        proto.GenericError,
+		ErrorCode:        protocol.GenericError,
 		ErrorDescription: fmt.Sprintf("action:%v,error:%v", action, fieldErrors.Error()),
 		ErrorDetails:     nil,
 	}
 }
 func propertyConstraintViolationLen(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
-		ErrorCode:        proto.PropertyConstraintViolation,
+		ErrorCode:        protocol.PropertyConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v len must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
 		ErrorDetails:     nil,
 	}
 }
 func propertyConstraintViolationCmp(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
-		ErrorCode:        proto.PropertyConstraintViolation,
+		ErrorCode:        protocol.PropertyConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
 		ErrorDetails:     nil,
 	}
@@ -74,7 +74,7 @@ func checkValidatorError(err error, action string) *Error {
 		}
 	}
 	return &Error{
-		ErrorCode:        proto.CallInternalError,
+		ErrorCode:        protocol.CallInternalError,
 		ErrorDescription: err.Error(),
 		ErrorDetails:     nil,
 	}

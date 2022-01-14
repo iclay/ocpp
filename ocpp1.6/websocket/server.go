@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	local "ocpp16/plugin/passive/local"
-	"ocpp16/proto"
+	"ocpp16/protocol"
 	"reflect"
 	"strings"
 	"time"
@@ -19,35 +19,63 @@ import (
 var serverSubprotocols = []string{"ocpp1.6"}
 
 type ActionPlugin interface {
-	RequestHandler(action string) (proto.RequestHandler, bool)
-	ResponseHandler(action string) (proto.ResponseHandler, bool)
+	RequestHandler(action string) (protocol.RequestHandler, bool)
+	ResponseHandler(action string) (protocol.ResponseHandler, bool)
 }
 
 type Server struct {
-	ginServer     *gin.Engine
-	upgrader      websocket.Upgrader
-	wsconns       *wsconns
-	validate      *validator.Validate
-	ocpp16map     *proto.OCPP16Map
-	ocppTypePools *ocppTypePools
-	dispatcher    *dispatcher
-	actionPlugin  ActionPlugin
+	ginServer         *gin.Engine
+	upgrader          websocket.Upgrader
+	wsconns           *wsconns
+	validate          *validator.Validate
+	ocpp16map         *protocol.OCPP16Map
+	ocppTypePools     *ocppTypePools
+	dispatcher        *dispatcher
+	actionPlugin      ActionPlugin
+	connectHandler    []func(id string) error
+	disconnectHandler []func(id string) error
+}
+
+func logIfError(id string, err error) {
+	if err != nil {
+		log.Errorf("id(%v),error(%v)", id, err)
+	}
 }
 
 func (s *Server) clientOnConnect(id string, ws *wsconn) {
 	s.dispatcher.callStateMap.createNewRequest(id)
 	s.dispatcher.requestQueueMap.createNewQueue(id)
 	s.registerConn(id, ws)
+	log.Debug(len(s.connectHandler))
+	if s.connectHandler != nil {
+		for _, handler := range s.connectHandler {
+			go logIfError(id, handler(id))
+		}
+	}
 }
 
-func (s *Server) cancelContex(id string) {
-	s.dispatcher.cancelContext(id)
+func (s *Server) ClientOnHandler(fns ...func(id string) error) {
+	s.connectHandler = append(s.connectHandler, fns...)
 }
+
 func (s *Server) clientOnDisconnect(id string) {
 	s.deleteConn(id)
 	s.deleteDispatcherQueue(id)
 	s.deleteDispatcherCallState(id)
 	s.cancelContex(id)
+	if s.disconnectHandler != nil {
+		for _, handler := range s.disconnectHandler {
+			go logIfError(id, handler(id))
+		}
+	}
+}
+
+func (s *Server) ClientOnDisConnetHandler(fns ...func(id string) error) {
+	s.disconnectHandler = append(s.disconnectHandler, fns...)
+}
+
+func (s *Server) cancelContex(id string) {
+	s.dispatcher.cancelContext(id)
 }
 
 func (s *Server) registerConn(id string, wsconn *wsconn) {
@@ -86,7 +114,7 @@ func (s *Server) deleteDispatcherQueue(id string) {
 	s.dispatcher.requestQueueMap.deleteQueue(id)
 }
 
-func (s *Server) HandleActiveCall(ctx context.Context, id string, call *proto.Call) error {
+func (s *Server) HandleActiveCall(ctx context.Context, id string, call *protocol.Call) error {
 	return s.dispatcher.appendRequest(ctx, id, call)
 }
 
@@ -111,8 +139,8 @@ var defaultServer = func() *Server {
 		ginServer:     gin.Default(),
 		upgrader:      websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
 		wsconns:       newWsconns(),
-		validate:      proto.Validate,
-		ocpp16map:     proto.OCPP16M,
+		validate:      protocol.Validate,
+		ocpp16map:     protocol.OCPP16M,
 		ocppTypePools: typePools,
 		actionPlugin:  local.NewActionPlugin(), //default action plugin
 	}
@@ -177,13 +205,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 		return
 	}
 	//The protocol does not support
-	if ocppProto == "" {
-		log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
-		conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
-			fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
-		conn.Close()
-		return
-	}
+	// if ocppProto == "" {
+	// 	log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
+	// 	conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
+	// 		fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
+	// 	conn.Close()
+	// 	return
+	// }
 	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
 	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
 	if s.connExists(p.String()) {

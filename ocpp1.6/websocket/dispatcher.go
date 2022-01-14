@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"ocpp16/proto"
+	"ocpp16/protocol"
 	"runtime"
 	"sync"
 	"time"
@@ -12,10 +12,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type ActiveCallHandler func(ctx context.Context, id string, call *proto.Call) error
+type ActiveCallHandler func(ctx context.Context, id string, call *protocol.Call) error
 
 type request struct {
-	call    *proto.Call
+	call    *protocol.Call
 	reqTime string
 }
 
@@ -35,7 +35,7 @@ func newCallStateMap() *callStateMap {
 func (m *callStateMap) createNewRequest(id string) {
 	m.Lock()
 	defer m.Unlock()
-	m.pendingCallState[id] = &request{call: &proto.Call{}}
+	m.pendingCallState[id] = &request{call: &protocol.Call{}}
 }
 
 func (m *callStateMap) getPendingRequest(id string) (*request, bool) {
@@ -65,7 +65,7 @@ func (m *callStateMap) requestDone(id string, uniqueid string) {
 	m.Lock()
 	defer m.Unlock()
 	if req, ok := m.pendingCallState[id]; ok && req.call.UID() == uniqueid {
-		m.pendingCallState[id] = &request{call: &proto.Call{}}
+		m.pendingCallState[id] = &request{call: &protocol.Call{}}
 	}
 }
 
@@ -201,10 +201,10 @@ func (d *dispatcher) run() {
 				d.requestDone(id, ctx.uniqueid)
 				contextMap[id] = timeoutContext{}
 				if ws, ok := d.server.getConn(id); ok {
-					go ws.responseHandler(ctx.uniqueid, proto.CallErrorName, &proto.CallError{
-						MessageTypeID:    proto.CALL_ERROR,
+					go ws.responseHandler(ctx.uniqueid, protocol.CallErrorName, &protocol.CallError{
+						MessageTypeID:    protocol.CALL_ERROR,
 						UniqueID:         ctx.uniqueid,
-						ErrorCode:        proto.CallInternalError,
+						ErrorCode:        protocol.CallInternalError,
 						ErrorDescription: fmt.Sprintf("center auto response due to device response timeout,uniqueid(%v)", ctx.uniqueid),
 						ErrorDetails:     nil,
 					})
@@ -319,7 +319,7 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 	d.nextReadyC <- id
 }
 
-func (d *dispatcher) appendRequest(ctx context.Context, id string, call *proto.Call) error {
+func (d *dispatcher) appendRequest(ctx context.Context, id string, call *protocol.Call) error {
 	log.Debugf("active call, append request, id (%v),call(%+v)", id, call)
 	if call == nil || call.UniqueID == "" {
 		log.Errorf("active call failed, call is nil or uniqueid is nil,id(%v),call(%+v)", id, call)

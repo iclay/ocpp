@@ -3,7 +3,7 @@ package local
 import (
 	"context"
 	rand "math/rand"
-	"ocpp16/proto"
+	"ocpp16/protocol"
 	"sync"
 	"time"
 )
@@ -23,8 +23,8 @@ func RandString(len int) string {
 }
 
 type LocalActionPlugin struct {
-	requestHandlerMap  map[string]proto.RequestHandler
-	responseHandlerMap map[string]proto.ResponseHandler
+	requestHandlerMap  map[string]protocol.RequestHandler
+	responseHandlerMap map[string]protocol.ResponseHandler
 }
 
 func NewActionPlugin() *LocalActionPlugin {
@@ -34,45 +34,45 @@ func NewActionPlugin() *LocalActionPlugin {
 	return plugin
 }
 
-func (l *LocalActionPlugin) BootNotification(ctx context.Context, request proto.Request) (proto.Response, error) {
-	return &proto.BootNotificationResponse{
+func (l *LocalActionPlugin) BootNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	return &protocol.BootNotificationResponse{
 		CurrentTime: time.Now().Format(time.RFC3339),
 		Interval:    10,
 		Status:      "Accepted",
 	}, nil
 }
 
-func (l *LocalActionPlugin) StatusNotification(ctx context.Context, request proto.Request) (proto.Response, error) {
-	return &proto.StatusNotificationRequest{
+func (l *LocalActionPlugin) StatusNotification(ctx context.Context, request protocol.Request) (protocol.Response, error) {
+	return &protocol.StatusNotificationRequest{
 		ConnectorId:     15,
 		ErrorCode:       "ConnectorLockFailure",
 		Info:            RandString(40),
 		Status:          "Available",
-		Timestamp:       time.Now().Format(proto.ISO8601),
+		Timestamp:       time.Now().Format(protocol.ISO8601),
 		VendorId:        RandString(240),
 		VendorErrorCode: RandString(40),
 	}, nil
 }
 
 func (l *LocalActionPlugin) registerRequestHandler() {
-	l.requestHandlerMap = map[string]proto.RequestHandler{
-		proto.BootNotificationName:   proto.RequestHandler(l.BootNotification),
-		proto.StatusNotificationName: proto.RequestHandler(l.StatusNotification),
+	l.requestHandlerMap = map[string]protocol.RequestHandler{
+		protocol.BootNotificationName:   protocol.RequestHandler(l.BootNotification),
+		protocol.StatusNotificationName: protocol.RequestHandler(l.StatusNotification),
 	}
 }
 
 //RequestHandler represent device active request Center
-func (l *LocalActionPlugin) RequestHandler(action string) (proto.RequestHandler, bool) {
+func (l *LocalActionPlugin) RequestHandler(action string) (protocol.RequestHandler, bool) {
 	handler, ok := l.requestHandlerMap[action]
 	return handler, ok
 }
 
 func (l *LocalActionPlugin) registerResponseHandler() {
-	l.responseHandlerMap = map[string]proto.ResponseHandler{}
+	l.responseHandlerMap = map[string]protocol.ResponseHandler{}
 }
 
 //ResponseHandler represent The device reply to the center request
-func (l *LocalActionPlugin) ResponseHandler(action string) (proto.ResponseHandler, bool) {
+func (l *LocalActionPlugin) ResponseHandler(action string) (protocol.ResponseHandler, bool) {
 	handler, ok := l.responseHandlerMap[action]
 	return handler, ok
 }
