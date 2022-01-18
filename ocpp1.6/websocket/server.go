@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"ocpp16/config"
 	local "ocpp16/plugin/passive/local"
 	"ocpp16/protocol"
 	"reflect"
@@ -222,11 +223,12 @@ func (s *Server) wsHandler(c *gin.Context) {
 		conn.Close()
 		return
 	}
+	conf := config.GCONF
 	ws := &wsconn{
 		server:  s,
 		conn:    conn,
 		id:      p.String(),
-		timeout: time.Second * 30,
+		timeout: time.Second * time.Duration(conf.HeartbeatTimeout),
 		ping:    make(chan []byte),
 		closeC:  make(chan error),
 	}

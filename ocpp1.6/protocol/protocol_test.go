@@ -860,7 +860,7 @@ func RemoteStartTransactionRequestSuccess() *RemoteStartTransactionRequest {
 	return &RemoteStartTransactionRequest{
 		ConnectorId: 10,
 		IdTag:       IdToken(RandomString(18)),
-		ChargingProfile: ChargingProfile{
+		ChargingProfile: &ChargingProfile{
 			ChargingProfiled:       10,
 			TransactionId:          10,
 			StackLevel:             10,
@@ -891,7 +891,7 @@ func RemoteStartTransactionRequestFail() *RemoteStartTransactionRequest {
 	return &RemoteStartTransactionRequest{
 		ConnectorId: -1,
 		IdTag:       IdToken(RandomString(21)),
-		ChargingProfile: ChargingProfile{
+		ChargingProfile: &ChargingProfile{
 			// ChargingProfiled:10,
 			//TransactionId:10,
 			StackLevel:             -1,
@@ -1261,12 +1261,14 @@ func testSetChargingProfileRequest(call *SetChargingProfileRequest, t *testing.T
 	if err != nil {
 		t.Error(err)
 	}
+	t.Log(string(SetChargingProfile_reqbyte))
 	var tmp = &SetChargingProfileRequest{}
 	err = json.Unmarshal(SetChargingProfile_reqbyte, tmp)
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	t.Logf("%+v", tmp)
 	err = Validate.Struct(tmp)
 	if err != nil {
 		t.Error(err)

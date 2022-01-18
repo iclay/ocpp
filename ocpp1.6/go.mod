@@ -10,5 +10,6 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/smallnest/rpcx v0.0.0-20200409135154-327a93bc2180
+	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli/v2 v2.3.0
 )

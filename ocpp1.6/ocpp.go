@@ -98,11 +98,15 @@ func serve(c *cli.Context) error {
 		return nil
 	}, actionPlugin.ChargingPointOffline)
 	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
-	serveAddr, serveURI := fmt.Sprintf("%v:%v", conf.WebsocketAddr, conf.WebsocketPort), conf.WebsocketURI
-	if conf.TLSEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
-		server.ServeTLS(serveAddr, serveURI, conf.TLSCertificate, conf.TLSCertificateKey)
-	} else {
-		server.Serve(serveAddr, serveURI)
+	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
+	if conf.WsEnable {
+		wsAddr := fmt.Sprintf("%v:%v", ServiceAddr, conf.WsPort)
+		server.Serve(wsAddr, ServiceURI)
 	}
+	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
+		wssAddr := fmt.Sprintf("%v:%v", ServiceAddr, conf.WssPort)
+		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
+	}
+
 	return nil
 }

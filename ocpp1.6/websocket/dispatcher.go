@@ -338,6 +338,7 @@ func (d *dispatcher) appendRequest(ctx context.Context, id string, call *protoco
 		return fmt.Errorf("active call failed, validate  payload error(%v),id(%v),call(%+v)", checkValidatorError(err, call.Action), id, call)
 	}
 	if err := d.requestQueueMap.pushRequset(id, &request{call: call}); err != nil {
+		log.Error(err)
 		return err
 	}
 	d.requestC <- id

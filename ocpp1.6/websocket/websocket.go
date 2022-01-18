@@ -5,13 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"ocpp16/protocol"
 	"reflect"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/smallnest/rpcx/share"
 )
 
 type wsconn struct {
@@ -31,9 +29,7 @@ type wsconns struct {
 }
 
 func newWsconns() *wsconns {
-	return &wsconns{
-		wsmap: make(map[string]*wsconn),
-	}
+	return &wsconns{wsmap: make(map[string]*wsconn)}
 }
 
 func (ws *wsconns) deleteConn(id string) {
@@ -91,12 +87,8 @@ func (ws *wsconn) read() {
 
 func (ws *wsconn) responseHandler(uniqueid string, action string, res protocol.Response) {
 	if handler, ok := ws.server.actionPlugin.ResponseHandler(action); ok {
-		ctx := context.WithValue(context.Background(), share.ResMetaDataKey, map[string]string{
-			"chargingPointIdentify": ws.id,
-			"messageId":             uniqueid,
-		})
 		log.Debugf("client response, id(%v), uniqueid(%v),action(%v), response(%+v)", ws.id, uniqueid, action, res)
-		if err := handler(ctx, res); err != nil {
+		if err := handler(context.Background(), ws.id, uniqueid, res); err != nil {
 			log.Errorf("response handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 		}
 		return
@@ -107,12 +99,8 @@ func (ws *wsconn) responseHandler(uniqueid string, action string, res protocol.R
 func (ws *wsconn) requestHandler(uniqueid string, action string, req protocol.Request) {
 
 	if handler, ok := ws.server.actionPlugin.RequestHandler(action); ok {
-		ctx := context.WithValue(context.Background(), share.ReqMetaDataKey, map[string]string{
-			"chargingPointIdentify": ws.id,
-			"messageId":             uniqueid,
-		})
 		log.Debugf("client request, id(%v), uniqueid(%v),action(%v), request(%+v)", ws.id, uniqueid, action, req)
-		res, err := handler(ctx, req)
+		res, err := handler(context.Background(), ws.id, uniqueid, req)
 		if err != nil {
 			log.Errorf("request handler failed, id:(%v), uniqueid:(%v),action:(%v),err:(%v)", ws.id, uniqueid, action, err)
 			return
@@ -445,7 +433,7 @@ func (ws *wsconn) messageHandler(wsmsg []byte) {
 	case protocol.CALL_ERROR:
 		ws.callErrorHandler(uniqueid, wsmsg, fields)
 	default:
-		log.Errorf("not support wsmsgTypeID(%v) current", wsmsgTypeid)
+		log.Errorf("not support wsmsgTypeID(%v) current, id(%v)", wsmsgTypeid, ws.id)
 	}
 	return
 }
@@ -454,7 +442,10 @@ func (ws *wsconn) write() {
 	for {
 		select {
 		case ping := <-ws.ping:
-			ws.writeMessage(websocket.PongMessage, ping)
+			log.Debugf("%v recv ping message(%v)", ws.id, string(ping))
+			if err := ws.writeMessage(websocket.PongMessage, ping); err != nil {
+				log.Error("id(%v) write pong message(%v) error", ws.id, string(ping))
+			}
 		case closeError := <-ws.closeC:
 			log.Errorf("id(%v) closed, err(%v)", ws.id, closeError)
 			return

@@ -67,9 +67,9 @@ type ChargingProfile struct {
 }
 
 type RemoteStartTransactionRequest struct {
-	ConnectorId     int             `json:"connectorId,omitempty" validate:"omitempty,gte=0"`
-	IdTag           IdToken         `json:"idTag" validate:"required,max=20"`
-	ChargingProfile ChargingProfile `json:"chargingProfile,omitempty" validate:"omitempty"`
+	ConnectorId     int              `json:"connectorId,omitempty" validate:"omitempty,gte=0"`
+	IdTag           IdToken          `json:"idTag" validate:"required,max=20"`
+	ChargingProfile *ChargingProfile `json:"chargingProfile,omitempty" validate:"omitempty"`
 }
 
 func (RemoteStartTransactionRequest) Action() string {

@@ -13,18 +13,20 @@ import (
 //GConf The label name must be consistent with the configuration file, otherwise it cannot be resolved
 type GConf struct {
 	Include           string   `label:"include" parse_func:"parse_file"`
-	WebsocketAddr     string   `label:"websocket_addr"`
-	WebsocketPort     string   `label:"websocket_port"`
-	WebsocketURI      string   `label:"websocket_uri"`
+	ServiceAddr       string   `label:"service_addr"`
+	ServiceURI        string   `label:"service_uri"`
+	WsEnable          bool     `label:"ws_enable" parse_func:"parse_bool"`
+	WsPort            int      `label:"ws_port"`
+	WssEnable         bool     `label:"wss_enable" parse_func:"parse_bool"`
+	WssPort           int      `label:"wss_port"`
+	TLSCertificate    string   `label:"tls_cert"`
+	TLSCertificateKey string   `label:"tls_key"`
 	HeartbeatTimeout  int      `label:"heartbeat_timeout"`
 	ETCDList          []string `label:"etcd_list" parse_func:"parse_string_list"`
 	ETCDBasePath      string   `label:"etcd_base_path"`
-	UsePool           bool     `label:"use_pool" parse_func:"parse_bool"`
-	TLSEnable         bool     `label:"tls_enable" parse_func:"parse_bool"`
-	TLSCertificate    string   `label:"tls_cert"`
-	TLSCertificateKey string   `label:"tls_key"`
-	LogPath           string   `label:"log_path"`
 	RPCAddress        string   `label:"rpc_addr"`
+	UsePool           bool     `label:"use_pool" parse_func:"parse_bool"`
+	LogPath           string   `label:"log_path"`
 	LogLevel          string   `label:"log_level"` // trace, debug, info, warn[ing], error, fatal, panic
 	LogMaxDiskUsage   int64    `label:"log_max_disk_usage" parse_func:"parse_bytes"`
 	LogMaxFileNum     int64    `label:"log_max_file_num" parse_func:"parse_bytes"`

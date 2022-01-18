@@ -51,6 +51,8 @@ github.com/coreos/etcd/version
 github.com/coreos/go-semver/semver
 # github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d
 github.com/cpuguy83/go-md2man/v2/md2man
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/dgryski/go-jump v0.0.0-20170409065014-e1f439676b57
 github.com/dgryski/go-jump
 # github.com/docker/libkv v0.2.1
@@ -228,6 +230,8 @@ github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
 # github.com/pkg/errors v0.9.1
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 ## explicit
 github.com/rcrowley/go-metrics
@@ -264,6 +268,10 @@ github.com/smallnest/rpcx/util
 github.com/smallnest/valkeyrie/store/redis
 # github.com/soheilhy/cmux v0.1.4
 github.com/soheilhy/cmux
+# github.com/stretchr/testify v1.4.0
+## explicit
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
 # github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 github.com/tatsushid/go-fastping
 # github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161
