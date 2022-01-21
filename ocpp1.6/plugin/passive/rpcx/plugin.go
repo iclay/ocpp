@@ -2,11 +2,10 @@ package rpcx
 
 import (
 	"context"
-	"ocpp16/config"
-	"ocpp16/protocol"
-
 	"github.com/smallnest/rpcx/client"
 	"github.com/smallnest/rpcx/share"
+	"ocpp16/config"
+	"ocpp16/protocol"
 )
 
 type RPCXPlugin struct {
@@ -166,7 +165,7 @@ type Reply struct {
 // chargingCore-response
 func (c *RPCXPlugin) ChangeConfigurationResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -176,7 +175,7 @@ func (c *RPCXPlugin) ChangeConfigurationResponse(ctx context.Context, id string,
 
 func (c *RPCXPlugin) DataTransferResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -186,7 +185,7 @@ func (c *RPCXPlugin) DataTransferResponse(ctx context.Context, id string, unique
 
 func (c *RPCXPlugin) RemoteStartTransactionResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -196,7 +195,7 @@ func (c *RPCXPlugin) RemoteStartTransactionResponse(ctx context.Context, id stri
 
 func (c *RPCXPlugin) ResetResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -206,7 +205,7 @@ func (c *RPCXPlugin) ResetResponse(ctx context.Context, id string, uniqueid stri
 
 func (c *RPCXPlugin) RemoteStopTransactionResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -216,7 +215,7 @@ func (c *RPCXPlugin) RemoteStopTransactionResponse(ctx context.Context, id strin
 
 func (c *RPCXPlugin) UnlockConnectorResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -226,7 +225,7 @@ func (c *RPCXPlugin) UnlockConnectorResponse(ctx context.Context, id string, uni
 
 func (c *RPCXPlugin) GetConfigurationResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -243,7 +242,7 @@ func (c *RPCXPlugin) CallError(ctx context.Context, id string, uniqueid string, 
 // smartCharging - repsonse
 func (c *RPCXPlugin) SetChargingProfileResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -253,7 +252,7 @@ func (c *RPCXPlugin) SetChargingProfileResponse(ctx context.Context, id string, 
 
 func (c *RPCXPlugin) ClearChargingProfileResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -263,7 +262,7 @@ func (c *RPCXPlugin) ClearChargingProfileResponse(ctx context.Context, id string
 
 func (c *RPCXPlugin) GetCompositeScheduleResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -274,7 +273,7 @@ func (c *RPCXPlugin) GetCompositeScheduleResponse(ctx context.Context, id string
 // firmwareManagement - response
 func (c *RPCXPlugin) GetDiagnosticsResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -284,7 +283,7 @@ func (c *RPCXPlugin) GetDiagnosticsResponse(ctx context.Context, id string, uniq
 
 func (c *RPCXPlugin) UpdateFirmWareResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -296,7 +295,7 @@ func (c *RPCXPlugin) UpdateFirmWareResponse(ctx context.Context, id string, uniq
 
 func (c *RPCXPlugin) ReserveNowResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -306,7 +305,7 @@ func (c *RPCXPlugin) ReserveNowResponse(ctx context.Context, id string, uniqueid
 
 func (c *RPCXPlugin) CancelReservationResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -317,7 +316,7 @@ func (c *RPCXPlugin) CancelReservationResponse(ctx context.Context, id string, u
 //RemoteTrigger -response
 func (c *RPCXPlugin) TriggerMessageResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -328,7 +327,7 @@ func (c *RPCXPlugin) TriggerMessageResponse(ctx context.Context, id string, uniq
 //LocalAuthListManagement -response
 func (c *RPCXPlugin) SendLocalListResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})
@@ -338,7 +337,7 @@ func (c *RPCXPlugin) SendLocalListResponse(ctx context.Context, id string, uniqu
 
 func (c *RPCXPlugin) GetLocalListVersionResponse(ctx context.Context, id string, uniqueid string, res protocol.Response) error {
 	reply := &Reply{}
-	ctx = context.WithValue(ctx, share.ResMetaDataKey, map[string]string{
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
 		"chargingPointIdentify": id,
 		"messageId":             uniqueid,
 	})

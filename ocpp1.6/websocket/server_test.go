@@ -37,8 +37,8 @@ func TestServer(t *testing.T) {
 	config.GCONF = config.GConf{
 		HeartbeatTimeout: 30,
 	}
-	var wsEnable = false
-	var wssEnable = true
+	// wsEnable, wssEnable := false, true
+	wsEnable, wssEnable := true, false
 	waitGroup := &sync.WaitGroup{}
 	if wsEnable {
 		waitGroup.Add(1)

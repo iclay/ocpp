@@ -12,6 +12,8 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"math/big"
 	randn "math/rand"
@@ -23,9 +25,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/require"
 )
 
 var wss_addr = flag.String("wss_addr", "localhost:8091", "websocket tls service address")
@@ -94,8 +93,8 @@ func createTLSCertificate(certificateFilename string, keyFilename string, cn str
 func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCertName string, clientCertName string, clientKeyName string) {
 	flag.Parse()
 	name, id := RandString(5), RandString(5)
-	// name, id := "qinglianyun", "lihuaye"
-	path := fmt.Sprintf("/ocpp/%v/%v", name, id)
+	// name, id := "qinglianyun", "sujunkang"
+	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
 	u := url.URL{Scheme: "wss", Host: "localhost:8091", Path: path}
 	certPool := x509.NewCertPool()
 	data, err := ioutil.ReadFile(serverCertName)
@@ -119,16 +118,22 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 	}
 	defer c.Close()
 	ch := make(chan string, 10)
-	defer close(ch)
+	var closed bool
+	defer func() {
+		closed = true
+		// close(ch)
+	}()
 	queue := NewQueue()
 	var waitgroup sync.WaitGroup
-	waitgroup.Add(1)
 	var mtx sync.Mutex
+	waitgroup.Add(1)
 	go func() {
 		for range time.Tick(time.Second * 10) {
+			mtx.Lock()
 			if err = c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
 				t.Error(err)
 			}
+			mtx.Unlock()
 		}
 	}()
 	go func() { //test for center request
@@ -146,10 +151,11 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 					Request:       fnBootNotificationRequest(),
 				}
 				queue.Push(call.UniqueID)
-				if err := d.appendRequest(context.Background(), fmt.Sprintf("%v-%v", name, id), call); err != nil {
+				if err := d.appendRequest(context.Background(), fmt.Sprintf("%s-%s", name, id), call); err != nil {
 					return
 				}
-				time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
+				// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
+				time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 50)
 			}
 		}
 	}()
@@ -162,10 +168,10 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 				return
 			case res_uniqueid := <-ch:
 				rep_uniqueid, _ := queue.Pop()
-				// next_uniqueid, _ := queue.Peek()
-				// t.Logf("ws_id(%v), res_uniqueid(%v),rep_uniqueid(%v),queue remain(%v), next_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
+				next_uniqueid, _ := queue.Peek()
+				t.Logf("ws_id(%s), res_uniqueid(%s),rep_uniqueid(%s),queue remain(%d), next_uniqueid(%v)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
 				if res_uniqueid != rep_uniqueid {
-					t.Errorf("ws_id(%v), res_uniqueid(%v) != rep_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid)
+					t.Errorf("ws_id(%s), res_uniqueid(%s) != rep_uniqueid(%s)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid)
 				}
 			}
 		}
@@ -203,18 +209,20 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 						if err != nil {
 							return
 						}
-						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
-						t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
+						// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
+						//t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
 						mtx.Lock()
 						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
 						mtx.Unlock()
 						if err != nil {
 							return
 						}
-						ch <- callResult.UniqueID
+						if !closed {
+							ch <- callResult.UniqueID
+						}
 					}()
 				case float64(protocol.CALL_RESULT), float64(protocol.CALL_ERROR):
-					t.Logf("test for client call: recv msg(%v), ", string(message))
+					t.Logf("test for client call: recv msg(%s), ", string(message))
 				default:
 					t.Log(string(message))
 				}
@@ -271,23 +279,23 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 		}
 	}()
 	waitgroup.Wait()
-	t.Logf("(%v) grace exit gorutine", path)
+	t.Logf("(%s) grace exit gorutine", path)
 }
 
 func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*36000)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*300)
 	clientCertName := "../cert/client/client.pem"
 	clientKeyName := "../cert/client/client_key.pem"
 	err := createTLSCertificate(clientCertName, clientKeyName, "localhost", nil, nil)
 	require.Nil(t, err)
-	defer os.Remove(clientCertName)
-	defer os.Remove(clientKeyName)
+	// defer os.Remove(clientCertName)
+	// defer os.Remove(clientKeyName)
 	serverCertName := "../cert/server/cert.pem"
 	serverKeyName := "../cert/server/key.pem"
 	err = createTLSCertificate(serverCertName, serverKeyName, "localhost", nil, nil)
 	require.Nil(t, err)
-	defer os.Remove(serverCertName)
-	defer os.Remove(serverKeyName)
+	// defer os.Remove(serverCertName)
+	// defer os.Remove(serverKeyName)
 	lg := initLogger()
 	SetLogger(lg)
 	server := NewDefaultServer()
@@ -304,7 +312,7 @@ func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	}
 	select {
 	case <-ctx.Done():
-		time.Sleep(time.Second * 50)
+		time.Sleep(time.Second * 10)
 		cancel()
 	}
 	waitGroup.Done()

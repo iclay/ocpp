@@ -9,7 +9,6 @@ import (
 	"net/url"
 	local "ocpp16/plugin/passive/local"
 	"ocpp16/protocol"
-
 	// registry "ocpp16/registry/rpcx"
 	"github.com/gorilla/websocket"
 	//"github.com/sirupsen/logrus"
@@ -40,7 +39,7 @@ func RandString(len int) string {
 var fnBootNotificationRequest = func() protocol.BootNotificationRequest {
 	return protocol.BootNotificationRequest{
 		ChargePointVendor:       "qinglianyun",
-		ChargePointModel:        "lihuaye",
+		ChargePointModel:        "sujunkang",
 		ChargePointSerialNumber: RandString(15),
 		ChargeBoxSerialNumber:   RandString(15),
 		FirmwareVersion:         RandString(15),
@@ -137,11 +136,25 @@ var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
 	}
 }
 
-func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
+var fnResetRequest = func() *protocol.ResetRequest {
+	return &protocol.ResetRequest{
+		Type: protocol.ResetType("Hard"),
+	}
+}
+
+var fnResetResponse = func() *protocol.ResetResponse {
+
+	return &protocol.ResetResponse{
+		Status: protocol.ResetStatus("Accepted"),
+	}
+
+}
+
+func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	flag.Parse()
 	// name, id := RandString(5), RandString(5)
-	name, id := "qinglianyun", "lihuaye"
-	path := fmt.Sprintf("/ocpp/%v/%v", name, id)
+	name, id := "qinglianyun", fmt.Sprintf("sujunkang%d", i)
+	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
 	u := url.URL{Scheme: "ws", Host: "182.92.132.15:8090", Path: path}
 	dialer := websocket.Dialer{
 		Proxy:            http.ProxyFromEnvironment,
@@ -154,41 +167,49 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 	}
 	defer c.Close()
 	ch := make(chan string, 10)
-	defer close(ch)
+	var closed bool
+	defer func() {
+		closed = true
+		//close(ch)
+	}()
 	// queue := NewQueue()
 	var waitgroup sync.WaitGroup
-	waitgroup.Add(1)
 	var mtx sync.Mutex
 	go func() {
 		for range time.Tick(time.Second * 10) {
-			if err = c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+			mtx.Lock()
+			err := c.WriteMessage(websocket.PingMessage, []byte("ping"))
+			mtx.Unlock()
+			if err != nil {
 				t.Error(err)
 			}
 		}
 	}()
-	go func() { //test for center request
-		defer waitgroup.Done()
+	// waitgroup.Add(1)
+	// go func() { //test for center request
+	// 	defer waitgroup.Done()
 
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				// call := &protocol.Call{
-				// 	MessageTypeID: protocol.CALL,
-				// 	UniqueID:      RandString(7),
-				// 	Action:        "BootNotification",
-				// 	Request:       fnBootNotificationRequest(),
-				// }
-				// queue.Push(call.UniqueID)
-				// if err := d.appendRequest(context.Background(), fmt.Sprintf("%v-%v", name, id), call); err != nil {
-				// 	return
-				// }
-				// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
-				time.Sleep(time.Second * 10000)
-			}
-		}
-	}()
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		default:
+	// 			call := &protocol.Call{
+	// 				MessageTypeID: protocol.CALL,
+	// 				UniqueID:      RandString(7),
+	// 				Action:        "Reset",
+	// 				// Request:       fnBootNotificationRequest(),
+	// 				Request:       fnResetRequest(),
+	// 			}
+	// 			queue.Push(call.UniqueID)
+	// 			if err := d.appendRequest(context.Background(), fmt.Sprintf("%s-%s", name, id), call); err != nil {
+	// 				return
+	// 			}
+	// 			time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
+	// 			time.Sleep(time.Second * 10000)
+	// 		}
+	// 	}
+	// }()
 	// waitgroup.Add(1)
 	// go func() {
 	// 	defer waitgroup.Done()
@@ -198,10 +219,10 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 	// 			return
 	// 		case res_uniqueid := <-ch:
 	// 			rep_uniqueid, _ := queue.Pop()
-	// 			// next_uniqueid, _ := queue.Peek()
-	// 			// t.Logf("ws_id(%v), res_uniqueid(%v),rep_uniqueid(%v),queue remain(%v), next_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
+	// 			next_uniqueid, _ := queue.Peek()
+	// 			t.Logf("ws_id(%s), res_uniqueid(%s),rep_uniqueid(%s),queue remain(%d), next_uniqueid(%v)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
 	// 			if res_uniqueid != rep_uniqueid {
-	// 				t.Errorf("ws_id(%v), res_uniqueid(%v) != rep_uniqueid(%v)", fmt.Sprintf("%v-%v", name, id), res_uniqueid, rep_uniqueid)
+	// 				t.Errorf("ws_id(%s), res_uniqueid(%s) != rep_uniqueid(%s)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid)
 	// 			}
 	// 		}
 	// 	}
@@ -216,10 +237,12 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 			default:
 				_, message, err := c.ReadMessage()
 				if err != nil {
+					t.Error(err)
 					return
 				}
 				fields, err := parseMessage(message)
 				if err != nil {
+					t.Error(err)
 					return
 				}
 				switch fields[0].(float64) {
@@ -229,28 +252,32 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 						callResult := &protocol.CallResult{
 							MessageTypeID: protocol.CALL_RESULT,
 							UniqueID:      uniqueid,
-							Response: &protocol.BootNotificationResponse{
-								CurrentTime: time.Now().Format(time.RFC3339),
-								Interval:    10,
-								Status:      "Accepted",
-							},
+							// Response: &protocol.BootNotificationResponse{
+							// 	CurrentTime: time.Now().Format(time.RFC3339),
+							// 	Interval:    10,
+							// 	Status:      "Accepted",
+							// },
+							Response: fnResetResponse(),
 						}
 						callResultMsg, err := json.Marshal(callResult)
 						if err != nil {
 							return
 						}
 						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
-						t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
+						t.Logf("test for center call: id(%v),recv msg(%+v), resp_msg(%+v)", fmt.Sprintf("%s-%s", name, id), string(message), string(callResultMsg))
 						mtx.Lock()
-						// err = c.WriteMessage(websocket.TextMessage, callResultMsg)
+						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
 						mtx.Unlock()
 						if err != nil {
+							t.Error(err)
 							return
 						}
-						// ch <- callResult.UniqueID
+						if !closed {
+							ch <- callResult.UniqueID
+						}
 					}()
 				case float64(protocol.CALL_RESULT), float64(protocol.CALL_ERROR):
-					t.Logf("test for client call: recv msg(%v), ", string(message))
+					t.Logf("test for client call:id(%v), recv msg(%s)", fmt.Sprintf("%s-%s", name, id), string(message))
 				default:
 					t.Log(string(message))
 				}
@@ -307,11 +334,11 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher) {
 		}
 	}()
 	waitgroup.Wait()
-	t.Logf("(%v) grace exit gorutine", path)
+	t.Logf("(%s) grace exit gorutine", path)
 }
 
 func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*36000)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*66000)
 	lg := initLogger()
 	SetLogger(lg)
 	server := NewDefaultServer()
@@ -320,10 +347,10 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.Serve(*ws_addr, "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 1; i++ { //numbers of client
+	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		go func() {
-			clientHandler(ctx, t, server.dispatcher)
+			clientHandler(ctx, t, server.dispatcher, i)
 		}()
 	}
 	select {

@@ -39,7 +39,7 @@ type Server struct {
 
 func logIfError(id string, err error) {
 	if err != nil {
-		log.Errorf("id(%v),error(%v)", id, err)
+		log.Errorf("id(%s),error(%v)", id, err)
 	}
 }
 
@@ -55,7 +55,7 @@ func (s *Server) clientOnConnect(id string, ws *wsconn) {
 	}
 }
 
-func (s *Server) ClientOnHandler(fns ...func(id string) error) {
+func (s *Server) SetConnectHandlers(fns ...func(id string) error) {
 	s.connectHandler = append(s.connectHandler, fns...)
 }
 
@@ -71,7 +71,7 @@ func (s *Server) clientOnDisconnect(id string) {
 	}
 }
 
-func (s *Server) ClientOnDisConnetHandler(fns ...func(id string) error) {
+func (s *Server) SetDisconnetHandlers(fns ...func(id string) error) {
 	s.disconnectHandler = append(s.disconnectHandler, fns...)
 }
 
@@ -184,6 +184,7 @@ func (s *Server) ServeTLS(addr string, path string, tlsCertificate string, tlsCe
 }
 
 func (s *Server) wsHandler(c *gin.Context) {
+	conf := config.GCONF
 	var p Point
 	c.ShouldBindUri(&p)
 	var ocppProto string
@@ -202,33 +203,33 @@ func (s *Server) wsHandler(c *gin.Context) {
 	}
 	conn, err := s.upgrader.Upgrade(c.Writer, c.Request, respHeader)
 	if err != nil {
-		log.Error("id(%v) upgrade error", p.String())
+		log.Error("id(%s) upgrade error", p.String())
 		return
 	}
+	timeoutDuration := time.Second * time.Duration(conf.HeartbeatTimeout)
 	//The protocol does not support
 	if ocppProto == "" {
-		log.Errorf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())
+		log.Errorf("not support protocol(%+v) current, id(%s)", clientSubprotocols, p.String())
 		conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseProtocolError,
-			fmt.Sprintf("not support protocol(%+v) current, id(%v)", clientSubprotocols, p.String())), time.Now().Add(time.Second))
+			fmt.Sprintf("not support protocol(%+v) current, id(%s)", clientSubprotocols, p.String())), time.Now().Add(timeoutDuration))
 		conn.Close()
 		return
 	}
 	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
 	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
 	if s.connExists(p.String()) {
-		log.Errorf("id(%v) already connect, wait a while and try again", p.String())
+		log.Errorf("id(%s) already connect, wait about %ds and try again", p.String(), conf.HeartbeatTimeout)
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError,
-				fmt.Sprintf("id(%v) already connect, wait a while and try again", p.String())), time.Now().Add(time.Second))
+				fmt.Sprintf("id(%s) already connect, wait a while and try again", p.String())), time.Now().Add(timeoutDuration))
 		conn.Close()
 		return
 	}
-	conf := config.GCONF
 	ws := &wsconn{
 		server:  s,
 		conn:    conn,
 		id:      p.String(),
-		timeout: time.Second * time.Duration(conf.HeartbeatTimeout),
+		timeout: timeoutDuration,
 		ping:    make(chan []byte),
 		closeC:  make(chan error),
 	}

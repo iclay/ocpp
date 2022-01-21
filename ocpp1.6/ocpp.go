@@ -8,18 +8,16 @@ import (
 	"ocpp16/config"
 	"ocpp16/logwriter"
 	// registry "ocpp16/plugin/active/local"
+	log "github.com/sirupsen/logrus"
+	cli "github.com/urfave/cli/v2"
 	"ocpp16/websocket"
 	"os"
 	"time"
-
-	log "github.com/sirupsen/logrus"
-	cli "github.com/urfave/cli/v2"
 )
 
 var Version = "manual build has no version"
 
 func main() {
-
 	app := &cli.App{
 		EnableBashCompletion: true,
 		Name:                 "OCPP16",
@@ -89,22 +87,22 @@ func serve(c *cli.Context) error {
 	server := websocket.NewDefaultServer()
 	actionPlugin := rpcx.NewActionPlugin()
 	server.RegisterActionPlugin(actionPlugin)
-	server.ClientOnHandler(func(id string) error {
-		lg.Debugf("id(%v) connect,time(%v)", id, time.Now().Format(time.RFC3339))
+	server.SetConnectHandlers(func(id string) error {
+		lg.Debugf("id(%s) connect,time(%s)", id, time.Now().Format(time.RFC3339))
 		return nil
 	})
-	server.ClientOnDisConnetHandler(func(id string) error {
-		lg.Debugf("id(%v) disconnect,time(%v)", id, time.Now().Format(time.RFC3339))
+	server.SetDisconnetHandlers(func(id string) error {
+		lg.Debugf("id(%s) disconnect,time(%s)", id, time.Now().Format(time.RFC3339))
 		return nil
 	}, actionPlugin.ChargingPointOffline)
 	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
-		wsAddr := fmt.Sprintf("%v:%v", ServiceAddr, conf.WsPort)
+		wsAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WsPort)
 		server.Serve(wsAddr, ServiceURI)
 	}
 	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
-		wssAddr := fmt.Sprintf("%v:%v", ServiceAddr, conf.WssPort)
+		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
 
