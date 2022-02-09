@@ -11,7 +11,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 	"ocpp16/websocket"
 	"os"
-	"syscall"
+	// "syscall"
 	"time"
 )
 
@@ -56,14 +56,14 @@ func main() {
 
 func initLogger() *log.Logger {
 	// Increase resources limitations
-	var rLimit syscall.Rlimit
-	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
-		panic(err)
-	}
-	rLimit.Cur = rLimit.Max
-	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
-		panic(err)
-	}
+	// var rLimit syscall.Rlimit
+	// if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+	// 	panic(err)
+	// }
+	// rLimit.Cur = rLimit.Max
+	// if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+	// 	panic(err)
+	// }
 	conf := config.GCONF
 	lw := &logwriter.HourlySplit{
 		Dir:           conf.LogPath,

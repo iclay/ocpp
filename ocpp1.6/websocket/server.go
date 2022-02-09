@@ -178,7 +178,6 @@ var defaultServer = func() *Server {
 	pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
-	conf.UseEpoll = true
 	if conf.UseEpoll {
 		var epoller *epoller
 		var err error
@@ -303,14 +302,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 		fd:      fd,
 		timeout: timeoutDuration,
 		ping:    make(chan []byte),
-		closeC:  make(chan error),
+		closeC:  make(chan error, 1),
 	}
 	ws.setReadDeadTimeout(ws.timeout)
 	ws.conn.SetPingHandler(func(appData string) error {
 		ws.ping <- []byte(appData)
 		return ws.setReadDeadTimeout(ws.timeout)
 	})
-	conf.UseEpoll = true
 	if conf.UseEpoll {
 		reactor := s.loadBalancer.next()
 		if err = reactor.epoller.trigger(reactor.registerConn, ws); err != nil {

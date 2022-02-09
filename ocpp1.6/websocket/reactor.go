@@ -6,7 +6,6 @@ import (
 	"golang.org/x/sys/unix"
 	"runtime"
 	"sync/atomic"
-	"time"
 )
 
 var (
@@ -41,23 +40,14 @@ func (r *reactor) activity() {
 				//TODO() support epollout
 			}
 			if ev&InEvents != 0 {
-				t := time.Now().Unix()
-				fmt.Println("TestRead begin", fd, ws.id, t)
 				if err = ws.read(); err != nil {
-					fmt.Printf("Testdelete1, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					r.epoller.delete(fd)
-					fmt.Printf("Testdelete2, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					r.connections.deleteConn(ws.id, ws.fd)
-					fmt.Printf("Testdelete3, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					r.addConnCount(-1)
-					fmt.Printf("Testdelete4, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					ws.Lock()
-					fmt.Printf("Testdelete5, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					ws.stop(err)
-					fmt.Printf("Testdelete11, index=%v, fd=%v, id=%v\n", r.index, fd, ws.id)
 					ws.Unlock()
 				}
-				fmt.Println("TestRead end", fd, ws.id, t)
 			}
 		}
 		return err
@@ -65,7 +55,6 @@ func (r *reactor) activity() {
 }
 
 func (r *reactor) deleteAllConnections() {
-	fmt.Println("delete All")
 	r.connections.Lock()
 	for fd, wsconn := range r.connections.wsfdmap {
 		r.epoller.delete(fd)
@@ -96,7 +85,6 @@ func (r *reactor) registerConn(conn interface{}) error {
 		c.conn.Close()
 		return err
 	}
-	fmt.Printf("Testadd, index=%v, fd=%v, id=%v\n", r.index, c.fd, c.id)
 	c.server.clientOnConnect(c.id, c.fd, c)
 	r.connections.registerConn(c.id, c.fd, c)
 	r.addConnCount(1)

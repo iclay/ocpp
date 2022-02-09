@@ -354,8 +354,8 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.Serve(":8000", "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 10; i++ { //numbers of client
-		time.Sleep(time.Second / 1)
+	for i := 0; i < 1000; i++ { //numbers of client
+		time.Sleep(time.Second / 100)
 		// time.Sleep(time.Second * 1000)
 		go func() {
 			clientHandler(ctx, t, server.dispatcher, i)

@@ -13,15 +13,14 @@ import (
 )
 
 type wsconn struct {
-	server    *Server
-	conn      *websocket.Conn
-	id        string
-	fd        int
-	writebufs [][]byte
-	timeout   time.Duration
-	ping      chan []byte
-	closeC    chan error
-	closed    bool
+	server  *Server
+	conn    *websocket.Conn
+	id      string
+	fd      int
+	timeout time.Duration
+	ping    chan []byte
+	closeC  chan error
+	closed  bool
 	sync.Mutex
 }
 
@@ -74,15 +73,10 @@ func (ws *wsconns) connExists(id string) bool {
 
 func (ws *wsconn) stop(err error) {
 	if !ws.closed {
-		fmt.Printf("Testdelete6, fd=%v, id=%v\n", ws.fd, ws.id)
 		ws.server.clientOnDisconnect(ws.id, ws.fd)
-		fmt.Printf("Testdelete7, fd=%v, id=%v\n", ws.fd, ws.id)
 		ws.closeC <- err
-		fmt.Printf("Testdelete8, fd=%v, id=%v\n", ws.fd, ws.id)
 		ws.closed = true
-		fmt.Printf("Testdelete9, fd=%v, id=%v\n", ws.fd, ws.id)
 		ws.conn.Close()
-		fmt.Printf("Testdelete10, fd=%v, id=%v\n", ws.fd, ws.id)
 	}
 }
 
@@ -468,7 +462,7 @@ func (ws *wsconn) writedump() {
 		case ping := <-ws.ping:
 			log.Debugf("id(%s) recv ping message(%s)", ws.id, string(ping))
 			if err := ws.writeMessage(websocket.PongMessage, ping); err != nil {
-				log.Error("id(%s) write pong message(%s) error", ws.id, string(ping))
+				log.Errorf("id(%s) write pong message(%s) error", ws.id, string(ping))
 			}
 		case closeError := <-ws.closeC:
 			log.Errorf("id(%s) closed, err(%v)", ws.id, closeError)
