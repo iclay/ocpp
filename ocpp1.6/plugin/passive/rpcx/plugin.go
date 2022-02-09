@@ -6,6 +6,7 @@ import (
 	"github.com/smallnest/rpcx/share"
 	"ocpp16/config"
 	"ocpp16/protocol"
+	"time"
 )
 
 type RPCXPlugin struct {
@@ -46,6 +47,12 @@ func (c *RPCXPlugin) init() {
 	c.RemoteTrigger = client.NewXClient("RemoteTriggerClient", client.Failtry, client.RandomSelect, d5, client.DefaultOption)
 	d6 := client.NewEtcdV3Discovery(c.basePath, "LocalAuthListManagementClient", c.etcdAddr, nil)
 	c.LocalAuthListManagement = client.NewXClient("LocalAuthListManagementClient", client.Failtry, client.RandomSelect, d6, client.DefaultOption)
+}
+func (c *RPCXPlugin) Heartbeat(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.HeartbeatResponse{
+		CurrentTime: time.Now().Format(protocol.ISO8601),
+	}
+	return reply, nil
 }
 
 // chargingCore - request
@@ -149,6 +156,7 @@ func (c *RPCXPlugin) registerRequestHandler() {
 		protocol.StartTransactionName:           protocol.RequestHandler(c.StartTransaction),
 		protocol.StopTransactionName:            protocol.RequestHandler(c.StopTransaction),
 		protocol.FirmwareStatusNotificationName: protocol.RequestHandler(c.FirmwareStatusNotification),
+		protocol.HeartbeatName:                  protocol.RequestHandler(c.Heartbeat),
 	}
 }
 

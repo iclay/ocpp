@@ -81,7 +81,7 @@ func newRequesQueueMap() *requestQueueMap {
 func (m *requestQueueMap) createNewQueue(id string) {
 	m.Lock()
 	defer m.Unlock()
-	m.queueMap[id] = NewQueue()
+	m.queueMap[id] = NewRequestQueue()
 	return
 }
 
@@ -152,6 +152,10 @@ type timeoutContext struct {
 
 func (ctx *timeoutContext) isActive() bool {
 	return ctx.cancel != nil
+}
+
+func (d *dispatcher) stop(err error) {
+	d.stopC <- err
 }
 
 //This function will process the request from the center system.
@@ -307,7 +311,7 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 		log.Errorf("get queue error, conn may be close, id(%s), uniqueid(%s)", id, uniqueid)
 		return
 	}
-	requestQueue := q.(*requestQueue)
+	requestQueue := q.(*lockQueue)
 	req, ok := requestQueue.Peek()
 	if !ok {
 		log.Errorf("queue peek is empty,id(%s), uniqueid(%s)", id, uniqueid)

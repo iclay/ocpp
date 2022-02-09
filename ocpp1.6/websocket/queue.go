@@ -13,31 +13,37 @@ type Queue interface {
 //minQueueLen must be power of 2   x % n == x & (n - 1)
 const minQueueLen = 2 << 4
 
-type requestQueue struct {
+type lockQueue struct {
 	buf               []interface{}
 	head, tail, count int
 	sync.RWMutex
 }
 
-func NewQueue() *requestQueue {
-	return &requestQueue{
+func NewRequestQueue() *lockQueue {
+	return &lockQueue{
 		buf: make([]interface{}, minQueueLen),
 	}
 }
 
-func (q *requestQueue) Len() int {
+func NewEpollEventsQueue() *lockQueue {
+	return &lockQueue{
+		buf: make([]interface{}, minQueueLen),
+	}
+}
+
+func (q *lockQueue) Len() int {
 	q.RLock()
 	defer q.RUnlock()
 	return q.count
 }
 
-func (q *requestQueue) IsEmpty() bool {
+func (q *lockQueue) IsEmpty() bool {
 	q.RLock()
 	defer q.RUnlock()
 	return q.count == 0
 }
 
-func (q *requestQueue) resize() {
+func (q *lockQueue) resize() {
 	newBuf := make([]interface{}, q.count<<1)
 
 	if q.tail > q.head {
@@ -52,7 +58,7 @@ func (q *requestQueue) resize() {
 	q.buf = newBuf
 }
 
-func (q *requestQueue) Push(elem interface{}) {
+func (q *lockQueue) Push(elem interface{}) {
 	q.Lock()
 	defer q.Unlock()
 	if q.count == len(q.buf) {
@@ -63,7 +69,7 @@ func (q *requestQueue) Push(elem interface{}) {
 	q.count++
 }
 
-func (q *requestQueue) Peek() (interface{}, bool) {
+func (q *lockQueue) Peek() (interface{}, bool) {
 	q.RLock()
 	defer q.RUnlock()
 	if q.count <= 0 {
@@ -72,7 +78,7 @@ func (q *requestQueue) Peek() (interface{}, bool) {
 	return q.buf[q.head], true
 }
 
-func (q *requestQueue) Pop() (interface{}, bool) {
+func (q *lockQueue) Pop() (interface{}, bool) {
 	q.Lock()
 	defer q.Unlock()
 	if q.count <= 0 {

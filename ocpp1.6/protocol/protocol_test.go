@@ -484,11 +484,11 @@ func TestAuthorizeResponse(t *testing.T) {
 //// StartTransaction
 
 func StartTransactionRequestSuccess() *StartTransactionRequest {
-
+	MeterStart := 10
 	return &StartTransactionRequest{
 		ConnectorId:   10,
 		IdTag:         IdToken(RandomString(15)),
-		MeterStart:    10,
+		MeterStart:    &MeterStart,
 		ReservationId: 10,
 		Timestamp:     time.Now().Format(time.RFC3339),
 	}
@@ -496,11 +496,11 @@ func StartTransactionRequestSuccess() *StartTransactionRequest {
 }
 
 func StartTransactionRequestFail() *StartTransactionRequest {
-
+	MeterStart := 10
 	return &StartTransactionRequest{
 		ConnectorId:   -1,
 		IdTag:         IdToken(RandomString(25)),
-		MeterStart:    -1,
+		MeterStart:    &MeterStart,
 		ReservationId: 10,
 		Timestamp:     "2021-12-13",
 	}
@@ -1261,14 +1261,14 @@ func testSetChargingProfileRequest(call *SetChargingProfileRequest, t *testing.T
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(string(SetChargingProfile_reqbyte))
+	//t.Log(string(SetChargingProfile_reqbyte))
 	var tmp = &SetChargingProfileRequest{}
 	err = json.Unmarshal(SetChargingProfile_reqbyte, tmp)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	t.Logf("%+v", tmp)
+	//t.Logf("%+v", tmp)
 	err = Validate.Struct(tmp)
 	if err != nil {
 		t.Error(err)

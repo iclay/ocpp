@@ -18,10 +18,10 @@ func TestSpliter(t *testing.T) {
 
 	for i := 0; i < 30; i++ {
 		time.Sleep(time.Duration(time.Second))
-		n, err := h.Write([]byte("1234567890"))
+		_, err := h.Write([]byte("1234567890"))
 		if err != nil {
 			t.Error(err)
 		}
-		log.Println("write ", n)
+		//log.Println("write ", n)
 	}
 }

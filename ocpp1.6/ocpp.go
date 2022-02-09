@@ -2,16 +2,16 @@ package main
 
 import (
 	"fmt"
-	registry "ocpp16/plugin/active/rpcx"
-	rpcx "ocpp16/plugin/passive/rpcx"
-
 	"ocpp16/config"
 	"ocpp16/logwriter"
+	registry "ocpp16/plugin/active/rpcx"
+	rpcx "ocpp16/plugin/passive/rpcx"
 	// registry "ocpp16/plugin/active/local"
 	log "github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
 	"ocpp16/websocket"
 	"os"
+	"syscall"
 	"time"
 )
 
@@ -55,6 +55,15 @@ func main() {
 }
 
 func initLogger() *log.Logger {
+	// Increase resources limitations
+	var rLimit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		panic(err)
+	}
+	rLimit.Cur = rLimit.Max
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit); err != nil {
+		panic(err)
+	}
 	conf := config.GCONF
 	lw := &logwriter.HourlySplit{
 		Dir:           conf.LogPath,
@@ -85,6 +94,7 @@ func serve(c *cli.Context) error {
 	lg := initLogger()
 	websocket.SetLogger(lg)
 	server := websocket.NewDefaultServer()
+	defer server.Stop()
 	actionPlugin := rpcx.NewActionPlugin()
 	server.RegisterActionPlugin(actionPlugin)
 	server.SetConnectHandlers(func(id string) error {

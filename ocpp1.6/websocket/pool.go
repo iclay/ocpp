@@ -64,3 +64,20 @@ func (p *ocppTypePools) get(t reflect.Type) interface{} {
 	p.mu.RUnlock()
 	return pool.Get()
 }
+
+/*pool used for epoll trigger task*/
+type TaskFunc func(interface{}) error
+type Task struct {
+	RunFunc TaskFunc
+	RunArg  interface{}
+}
+
+var taskPool = sync.Pool{New: func() interface{} { return new(Task) }}
+
+func GetTask() *Task {
+	return taskPool.Get().(*Task)
+}
+func PutTask(task *Task) {
+	task.RunFunc, task.RunArg = nil, nil
+	taskPool.Put(task)
+}

@@ -1,9 +1,9 @@
 package protocol
 
 type StartTransactionRequest struct {
-	ConnectorId   int     `json:"type" validate:"required,gte=0"`
+	ConnectorId   int     `json:"connectorId" validate:"required,gte=0"`
 	IdTag         IdToken `json:"idTag" validate:"required,max=20"`
-	MeterStart    int     `json:"meterStart" validate:"required,gte=0"`
+	MeterStart    *int    `json:"meterStart" validate:"required,gte=0"`
 	ReservationId int     `json:"reservationId,omitempty" validate:"omitempty"`
 	Timestamp     string  `json:"timestamp" validate:"required,dateTime"`
 }

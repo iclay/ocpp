@@ -26,6 +26,7 @@ type GConf struct {
 	ETCDBasePath      string   `label:"etcd_base_path"`
 	RPCAddress        string   `label:"rpc_addr"`
 	UsePool           bool     `label:"use_pool" parse_func:"parse_bool"`
+	UseEpoll          bool     `label:"use_epoll" parse_func:"parse_bool"`
 	LogPath           string   `label:"log_path"`
 	LogLevel          string   `label:"log_level"` // trace, debug, info, warn[ing], error, fatal, panic
 	LogMaxDiskUsage   int64    `label:"log_max_disk_usage" parse_func:"parse_bytes"`

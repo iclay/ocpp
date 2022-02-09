@@ -3,7 +3,7 @@ package websocket
 import "testing"
 
 func TestQueueSimple(t *testing.T) {
-	q := NewQueue()
+	q := NewRequestQueue()
 
 	for i := 0; i < minQueueLen; i++ {
 		q.Push(i)
@@ -20,7 +20,7 @@ func TestQueueSimple(t *testing.T) {
 }
 
 func TestQueueWrapping(t *testing.T) {
-	q := NewQueue()
+	q := NewRequestQueue()
 
 	for i := 0; i < minQueueLen; i++ {
 		q.Push(i)
@@ -39,7 +39,7 @@ func TestQueueWrapping(t *testing.T) {
 }
 
 func TestQueueLength(t *testing.T) {
-	q := NewQueue()
+	q := NewRequestQueue()
 
 	if q.Len() != 0 {
 		t.Error("empty queue length not 0")
@@ -60,7 +60,7 @@ func TestQueueLength(t *testing.T) {
 }
 
 func TestQueuePeekOutOfRangePanics(t *testing.T) {
-	q := NewQueue()
+	q := NewRequestQueue()
 	if _, ok := q.Peek(); !ok {
 		t.Log("peek: when queue is empty, return false")
 	}
@@ -73,7 +73,7 @@ func TestQueuePeekOutOfRangePanics(t *testing.T) {
 }
 
 func TestQueueRemoveOutOfRangePanics(t *testing.T) {
-	q := NewQueue()
+	q := NewRequestQueue()
 
 	if _, ok := q.Pop(); !ok {
 		t.Log("Pop: when queue is empty, return false")
@@ -86,7 +86,7 @@ func TestQueueRemoveOutOfRangePanics(t *testing.T) {
 }
 
 func BenchmarkQueueSerial(b *testing.B) {
-	q := NewQueue()
+	q := NewRequestQueue()
 	for i := 0; i < b.N; i++ {
 		q.Push(nil)
 	}
@@ -97,7 +97,7 @@ func BenchmarkQueueSerial(b *testing.B) {
 }
 
 func BenchmarkQueueTickTock(b *testing.B) {
-	q := NewQueue()
+	q := NewRequestQueue()
 	for i := 0; i < b.N; i++ {
 		q.Push(nil)
 		q.Peek()

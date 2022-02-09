@@ -337,6 +337,7 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/trace
 # golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9
+## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows

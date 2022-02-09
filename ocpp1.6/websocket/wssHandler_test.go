@@ -95,7 +95,7 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 	name, id := RandString(5), RandString(5)
 	// name, id := "qinglianyun", "sujunkang"
 	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
-	u := url.URL{Scheme: "wss", Host: "localhost:8091", Path: path}
+	u := url.URL{Scheme: "wss", Host: "localhost:8000", Path: path}
 	certPool := x509.NewCertPool()
 	data, err := ioutil.ReadFile(serverCertName)
 	require.Nil(t, err)
@@ -123,7 +123,7 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 		closed = true
 		// close(ch)
 	}()
-	queue := NewQueue()
+	queue := NewRequestQueue()
 	var waitgroup sync.WaitGroup
 	var mtx sync.Mutex
 	waitgroup.Add(1)
@@ -154,8 +154,8 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 				if err := d.appendRequest(context.Background(), fmt.Sprintf("%s-%s", name, id), call); err != nil {
 					return
 				}
-				// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
-				time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 50)
+				// time.Sleep(time.Second*1)
+				time.Sleep(time.Second * time.Duration(randn.Intn(5)) / 5)
 			}
 		}
 	}()
@@ -283,19 +283,19 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 }
 
 func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*300)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*40)
 	clientCertName := "../cert/client/client.pem"
 	clientKeyName := "../cert/client/client_key.pem"
 	err := createTLSCertificate(clientCertName, clientKeyName, "localhost", nil, nil)
 	require.Nil(t, err)
-	// defer os.Remove(clientCertName)
-	// defer os.Remove(clientKeyName)
+	defer os.Remove(clientCertName)
+	defer os.Remove(clientKeyName)
 	serverCertName := "../cert/server/cert.pem"
 	serverKeyName := "../cert/server/key.pem"
 	err = createTLSCertificate(serverCertName, serverKeyName, "localhost", nil, nil)
 	require.Nil(t, err)
-	// defer os.Remove(serverCertName)
-	// defer os.Remove(serverKeyName)
+	defer os.Remove(serverCertName)
+	defer os.Remove(serverKeyName)
 	lg := initLogger()
 	SetLogger(lg)
 	server := NewDefaultServer()
@@ -304,7 +304,7 @@ func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.ServeTLS(*wss_addr, "/ocpp/:name/:id", serverCertName, serverKeyName)
 	}()
-	for i := 0; i < 1; i++ { //numbers of client
+	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		go func() {
 			TLSClientHandler(ctx, t, server.dispatcher, serverCertName, clientCertName, clientKeyName)

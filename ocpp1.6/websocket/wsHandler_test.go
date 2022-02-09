@@ -18,12 +18,14 @@ import (
 	"sync"
 	"testing"
 	"time"
+	// "github.com/gin-gonic/gin"
+	// "reflect"
 )
 
 //go test -timeout=30m -v
 var mx sync.Mutex
 var r = randn.New(randn.NewSource(time.Now().Unix()))
-var ws_addr = flag.String("ws_addr", "127.0.0.1:8090", "websocket service address")
+var ws_addr = flag.String("ws_addr", "127.0.0.1:8000", "websocket service address")
 
 func RandString(len int) string {
 	mx.Lock()
@@ -80,10 +82,10 @@ var fnAuthorizeRequest = func() protocol.AuthorizeRequest {
 var fnMeterValueRequest = func() protocol.MeterValuesRequest {
 	var meterValueReq = protocol.MeterValuesRequest{
 		ConnectorId:   10,
-		TransactionId: 81771202930020352,
+		TransactionId: 5,
 	}
 	var meterValue = protocol.MeterValue{
-		Timestamp: time.Now().Format(time.RFC3339),
+		Timestamp: time.Now().Format(protocol.ISO8601),
 	}
 	var sampledValue = protocol.SampledValue{
 		Value:   "100",
@@ -104,10 +106,11 @@ var fnMeterValueRequest = func() protocol.MeterValuesRequest {
 }
 
 var fnStartTransactionRequest = func() protocol.StartTransactionRequest {
+	meterStart := 10
 	return protocol.StartTransactionRequest{
 		ConnectorId:   10,
 		IdTag:         "qinglianyun",
-		MeterStart:    10,
+		MeterStart:    &meterStart,
 		ReservationId: 10,
 		Timestamp:     time.Now().Format(protocol.ISO8601),
 	}
@@ -130,7 +133,7 @@ var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
 		IdTag:           "qinglianyun",
 		MeterStop:       100,
 		Timestamp:       time.Now().Format(protocol.ISO8601),
-		TransactionId:   80030155044556800,
+		TransactionId:   5,
 		Reason:          "EmergencyStop",
 		TransactionData: []protocol.MeterValue{meterValue},
 	}
@@ -152,10 +155,12 @@ var fnResetResponse = func() *protocol.ResetResponse {
 
 func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	flag.Parse()
-	// name, id := RandString(5), RandString(5)
-	name, id := "qinglianyun", fmt.Sprintf("sujunkang%d", i)
+	name, id := RandString(5), RandString(5)
+	// name, id := "qinglianyun", fmt.Sprintf("sujunkang%d", i)
+	// name, id := "qinglianyun", "sujunkang"
 	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
 	u := url.URL{Scheme: "ws", Host: "182.92.132.15:8090", Path: path}
+	// u := url.URL{Scheme: "ws", Host: "localhost:8000", Path: path}
 	dialer := websocket.Dialer{
 		Proxy:            http.ProxyFromEnvironment,
 		HandshakeTimeout: 45 * time.Second,
@@ -163,15 +168,16 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	}
 	c, _, err := dialer.Dial(u.String(), nil)
 	if err != nil {
-		t.Fatal("dial:", err)
+		t.Fatal("dial:", err, path)
 	}
+	t.Log("path", path)
 	defer c.Close()
-	ch := make(chan string, 10)
-	var closed bool
-	defer func() {
-		closed = true
-		//close(ch)
-	}()
+	// ch := make(chan string, 10)
+	// var closed bool
+	// defer func() {
+	// 	closed = true
+	// 	//close(ch)
+	// }()
 	// queue := NewQueue()
 	var waitgroup sync.WaitGroup
 	var mtx sync.Mutex
@@ -237,7 +243,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 			default:
 				_, message, err := c.ReadMessage()
 				if err != nil {
-					t.Error(err)
+					t.Error(time.Now().Format(time.RFC3339), err)
 					return
 				}
 				fields, err := parseMessage(message)
@@ -265,19 +271,19 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 						}
 						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
 						t.Logf("test for center call: id(%v),recv msg(%+v), resp_msg(%+v)", fmt.Sprintf("%s-%s", name, id), string(message), string(callResultMsg))
-						mtx.Lock()
-						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
-						mtx.Unlock()
-						if err != nil {
-							t.Error(err)
-							return
-						}
-						if !closed {
-							ch <- callResult.UniqueID
-						}
+						// mtx.Lock()
+						// err = c.WriteMessage(websocket.TextMessage, callResultMsg)
+						// mtx.Unlock()
+						// if err != nil {
+						// 	t.Error(err)
+						// 	return
+						// }
+						// if !closed {
+						// 	ch <- callResult.UniqueID
+						// }
 					}()
 				case float64(protocol.CALL_RESULT), float64(protocol.CALL_ERROR):
-					t.Logf("test for client call:id(%v), recv msg(%s)", fmt.Sprintf("%s-%s", name, id), string(message))
+					t.Logf("test for client call:recv id(%v), recv msg(%s)", fmt.Sprintf("%s-%s", name, id), string(message))
 				default:
 					t.Log(string(message))
 				}
@@ -329,6 +335,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 					t.Error(err)
 					return
 				}
+				t.Logf("test for client call:send id(%v), send msg(%s)", fmt.Sprintf("%s-%s", name, id), string(callMsg))
 				time.Sleep(time.Second * 100)
 			}
 		}
@@ -345,10 +352,11 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	plugin := local.NewActionPlugin()
 	server.RegisterActionPlugin(plugin)
 	go func() {
-		server.Serve(*ws_addr, "/ocpp/:name/:id")
+		server.Serve(":8000", "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 100; i++ { //numbers of client
-		time.Sleep(time.Second / 10)
+	for i := 0; i < 10; i++ { //numbers of client
+		time.Sleep(time.Second / 1)
+		// time.Sleep(time.Second * 1000)
 		go func() {
 			clientHandler(ctx, t, server.dispatcher, i)
 		}()

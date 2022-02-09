@@ -2,19 +2,21 @@ package websocket
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	validator "github.com/go-playground/validator/v10"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"ocpp16/config"
 	local "ocpp16/plugin/passive/local"
 	"ocpp16/protocol"
 	"reflect"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	validator "github.com/go-playground/validator/v10"
-	"github.com/gorilla/websocket"
 )
 
 var serverSubprotocols = []string{"ocpp1.6"}
@@ -32,6 +34,10 @@ type Server struct {
 	ocpp16map         *protocol.OCPP16Map
 	ocppTypePools     *ocppTypePools
 	dispatcher        *dispatcher
+	loadBalancer      LoadBalancer
+	once              sync.Once
+	cond              *sync.Cond
+	wg                sync.WaitGroup
 	actionPlugin      ActionPlugin
 	connectHandler    []func(id string) error
 	disconnectHandler []func(id string) error
@@ -43,11 +49,10 @@ func logIfError(id string, err error) {
 	}
 }
 
-func (s *Server) clientOnConnect(id string, ws *wsconn) {
+func (s *Server) clientOnConnect(id string, fd int, ws *wsconn) {
 	s.dispatcher.callStateMap.createNewRequest(id)
 	s.dispatcher.requestQueueMap.createNewQueue(id)
-	s.registerConn(id, ws)
-	log.Debug(len(s.connectHandler))
+	s.registerConn(id, fd, ws)
 	if s.connectHandler != nil {
 		for _, handler := range s.connectHandler {
 			go logIfError(id, handler(id))
@@ -55,12 +60,8 @@ func (s *Server) clientOnConnect(id string, ws *wsconn) {
 	}
 }
 
-func (s *Server) SetConnectHandlers(fns ...func(id string) error) {
-	s.connectHandler = append(s.connectHandler, fns...)
-}
-
-func (s *Server) clientOnDisconnect(id string) {
-	s.deleteConn(id)
+func (s *Server) clientOnDisconnect(id string, fd int) {
+	s.deleteConn(id, fd)
 	s.deleteDispatcherQueue(id)
 	s.deleteDispatcherCallState(id)
 	s.cancelContex(id)
@@ -71,6 +72,10 @@ func (s *Server) clientOnDisconnect(id string) {
 	}
 }
 
+func (s *Server) SetConnectHandlers(fns ...func(id string) error) {
+	s.connectHandler = append(s.connectHandler, fns...)
+}
+
 func (s *Server) SetDisconnetHandlers(fns ...func(id string) error) {
 	s.disconnectHandler = append(s.disconnectHandler, fns...)
 }
@@ -79,20 +84,20 @@ func (s *Server) cancelContex(id string) {
 	s.dispatcher.cancelContext(id)
 }
 
-func (s *Server) registerConn(id string, wsconn *wsconn) {
-	s.wsconns.registerConn(id, wsconn)
+func (s *Server) registerConn(id string, fd int, wsconn *wsconn) {
+	s.wsconns.registerConn(id, fd, wsconn)
 }
 
-func (s *Server) connExists(id string) bool {
-	return s.wsconns.connExists(id)
+func (s *Server) deleteConn(id string, fd int) {
+	s.wsconns.deleteConn(id, fd)
 }
 
 func (s *Server) getConn(id string) (*wsconn, bool) {
 	return s.wsconns.getConn(id)
 }
 
-func (s *Server) deleteConn(id string) {
-	s.wsconns.deleteConn(id)
+func (s *Server) connExists(id string) bool {
+	return s.wsconns.connExists(id)
 }
 
 func (s *Server) setDefaultDispatcher(d *dispatcher) {
@@ -135,7 +140,31 @@ func (s *Server) RegisterActionPlugin(actionPlugin ActionPlugin) {
 	s.actionPlugin = actionPlugin
 }
 
+func (s *Server) waitStopSignal() {
+	s.cond.L.Lock()
+	s.cond.Wait()
+	s.cond.L.Unlock()
+}
+
+func (s *Server) Stop() {
+	conf := config.GCONF
+	s.dispatcher.stop(errors.New("stop dispatcher"))
+	if conf.UseEpoll {
+		s.waitStopSignal()
+		//trigger all reactor to stop
+		s.loadBalancer.iterate(func(_ int, react *reactor) error {
+			err := react.epoller.trigger(func(_ interface{}) error { return ErrReactorShutdown }, nil)
+			if err != nil {
+				log.Errorf("failed to call trigger on reactor%d when stopping server", react.index)
+			}
+			return nil
+		})
+		s.wg.Wait() //waiting for all reactor to stop
+	}
+}
+
 var defaultServer = func() *Server {
+	conf := config.GCONF
 	s := &Server{
 		ginServer:     gin.Default(),
 		upgrader:      websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
@@ -143,11 +172,50 @@ var defaultServer = func() *Server {
 		validate:      protocol.Validate,
 		ocpp16map:     protocol.OCPP16M,
 		ocppTypePools: typePools,
+		wg:            sync.WaitGroup{},
 		actionPlugin:  local.NewActionPlugin(), //default action plugin
 	}
 	pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
+	conf.UseEpoll = true
+	if conf.UseEpoll {
+		var epoller *epoller
+		var err error
+		s.cond = sync.NewCond(&sync.Mutex{})
+		loadBalancer := new(roundRobinLoadBalancer)
+		defer func() {
+			if err != nil {
+				loadBalancer.iterate(func(_ int, react *reactor) error {
+					react.epoller.close()
+					react.connections = nil
+					react.index = -1
+					return nil
+				})
+			}
+		}()
+		numCPU := runtime.NumCPU()
+		for index := 0; index < numCPU; index++ {
+			if epoller, err = createEpoller(); err != nil {
+				panic(err)
+			} else {
+				loadBalancer.register(&reactor{
+					server:      s,
+					connections: newWsconns(),
+					epoller:     epoller,
+				})
+			}
+		}
+		loadBalancer.iterate(func(_ int, r *reactor) error {
+			s.wg.Add(1)
+			go func() {
+				r.activity()
+				s.wg.Done()
+			}()
+			return nil
+		})
+		s.loadBalancer = loadBalancer
+	}
 	return s
 }()
 
@@ -201,11 +269,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 	if ocppProto != "" {
 		respHeader.Add("Sec-WebSocket-Protocol", ocppProto)
 	}
-	conn, err := s.upgrader.Upgrade(c.Writer, c.Request, respHeader)
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, respHeader)
 	if err != nil {
 		log.Error("id(%s) upgrade error", p.String())
 		return
 	}
+	fd := websocketFD2(conn)
 	timeoutDuration := time.Second * time.Duration(conf.HeartbeatTimeout)
 	//The protocol does not support
 	if ocppProto == "" {
@@ -218,22 +288,47 @@ func (s *Server) wsHandler(c *gin.Context) {
 	//The situation may occur when the charging pile has been disconnected, but the cloud heartbeat mechanism has not responded.
 	//When the charging pile initiates a connection, it needs to wait for the cloud to trigger the heartbeat mechanism to close the last connection
 	if s.connExists(p.String()) {
-		log.Errorf("id(%s) already connect, wait about %ds and try again", p.String(), conf.HeartbeatTimeout)
+		log.Errorf("id(%s) already connect, please wait about %ds and try again", p.String(), conf.HeartbeatTimeout)
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError,
 				fmt.Sprintf("id(%s) already connect, wait a while and try again", p.String())), time.Now().Add(timeoutDuration))
 		conn.Close()
 		return
 	}
+	// _ = unix.SetNonblock(fd, true)
 	ws := &wsconn{
 		server:  s,
 		conn:    conn,
 		id:      p.String(),
+		fd:      fd,
 		timeout: timeoutDuration,
 		ping:    make(chan []byte),
 		closeC:  make(chan error),
 	}
-	s.clientOnConnect(ws.id, ws)
-	go ws.read()
-	go ws.write()
+	ws.setReadDeadTimeout(ws.timeout)
+	ws.conn.SetPingHandler(func(appData string) error {
+		ws.ping <- []byte(appData)
+		return ws.setReadDeadTimeout(ws.timeout)
+	})
+	conf.UseEpoll = true
+	if conf.UseEpoll {
+		reactor := s.loadBalancer.next()
+		if err = reactor.epoller.trigger(reactor.registerConn, ws); err != nil {
+			log.Errorf("id=%s, error=%v", ws.id, err)
+			return
+		}
+		go ws.writedump()
+	} else {
+		s.clientOnConnect(ws.id, ws.fd, ws)
+		go ws.readdump()
+		go ws.writedump()
+	}
+}
+
+func websocketFD2(conn *websocket.Conn) int {
+	connVal := reflect.Indirect(reflect.ValueOf(conn)).FieldByName("conn").Elem()
+	tcpConn := reflect.Indirect(connVal).FieldByName("conn")
+	fdVal := tcpConn.FieldByName("fd")
+	pfdVal := reflect.Indirect(fdVal).FieldByName("pfd")
+	return int(pfdVal.FieldByName("Sysfd").Int())
 }
