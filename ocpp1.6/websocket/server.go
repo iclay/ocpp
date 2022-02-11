@@ -153,8 +153,7 @@ func (s *Server) Stop() {
 		s.waitStopSignal()
 		//trigger all reactor to stop
 		s.loadBalancer.iterate(func(_ int, react *reactor) error {
-			err := react.epoller.trigger(func(_ interface{}) error { return ErrReactorShutdown }, nil)
-			if err != nil {
+			if err := react.epoller.trigger(func(_ interface{}) error { return ErrReactorShutdown }, nil); err != nil {
 				log.Errorf("failed to call trigger on reactor%d when stopping server", react.index)
 			}
 			return nil
@@ -163,8 +162,7 @@ func (s *Server) Stop() {
 	}
 }
 
-var defaultServer = func() *Server {
-	conf := config.GCONF
+var defaultServer = func(useEpoll bool) *Server {
 	s := &Server{
 		ginServer:     gin.Default(),
 		upgrader:      websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
@@ -178,7 +176,7 @@ var defaultServer = func() *Server {
 	pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
-	if conf.UseEpoll {
+	if useEpoll {
 		var epoller *epoller
 		var err error
 		s.cond = sync.NewCond(&sync.Mutex{})
@@ -216,10 +214,11 @@ var defaultServer = func() *Server {
 		s.loadBalancer = loadBalancer
 	}
 	return s
-}()
+}
 
 func NewDefaultServer() *Server {
-	return defaultServer
+	useEpoll := config.GCONF.UseEpoll
+	return defaultServer(useEpoll)
 }
 
 func (s *Server) initOCPPTypePools(actions []string) {
@@ -315,7 +314,6 @@ func (s *Server) wsHandler(c *gin.Context) {
 			log.Errorf("id=%s, error=%v", ws.id, err)
 			return
 		}
-		go ws.writedump()
 	} else {
 		s.clientOnConnect(ws.id, ws.fd, ws)
 		go ws.readdump()

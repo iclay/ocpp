@@ -95,7 +95,7 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 	name, id := RandString(5), RandString(5)
 	// name, id := "qinglianyun", "sujunkang"
 	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
-	u := url.URL{Scheme: "wss", Host: "localhost:8000", Path: path}
+	u := url.URL{Scheme: "wss", Host: "localhost:8091", Path: path}
 	certPool := x509.NewCertPool()
 	data, err := ioutil.ReadFile(serverCertName)
 	require.Nil(t, err)
@@ -210,7 +210,7 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 							return
 						}
 						// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
-						//t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
+						t.Logf("test for center call: recv msg(%+v), resp_msg(%+v)", string(message), string(callResultMsg))
 						mtx.Lock()
 						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
 						mtx.Unlock()
@@ -304,7 +304,7 @@ func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.ServeTLS(*wss_addr, "/ocpp/:name/:id", serverCertName, serverKeyName)
 	}()
-	for i := 0; i < 100; i++ { //numbers of client
+	for i := 0; i < 2; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		go func() {
 			TLSClientHandler(ctx, t, server.dispatcher, serverCertName, clientCertName, clientKeyName)

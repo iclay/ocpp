@@ -182,7 +182,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	var waitgroup sync.WaitGroup
 	var mtx sync.Mutex
 	go func() {
-		for range time.Tick(time.Second * 10) {
+		for range time.Tick(time.Second * 100000) {
 			mtx.Lock()
 			err := c.WriteMessage(websocket.PingMessage, []byte("ping"))
 			mtx.Unlock()
@@ -269,7 +269,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 						if err != nil {
 							return
 						}
-						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
+						// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
 						t.Logf("test for center call: id(%v),recv msg(%+v), resp_msg(%+v)", fmt.Sprintf("%s-%s", name, id), string(message), string(callResultMsg))
 						// mtx.Lock()
 						// err = c.WriteMessage(websocket.TextMessage, callResultMsg)
@@ -336,7 +336,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 					return
 				}
 				t.Logf("test for client call:send id(%v), send msg(%s)", fmt.Sprintf("%s-%s", name, id), string(callMsg))
-				time.Sleep(time.Second * 100)
+				time.Sleep(time.Second * 10)
 			}
 		}
 	}()
@@ -354,8 +354,8 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.Serve(":8000", "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 1000; i++ { //numbers of client
-		time.Sleep(time.Second / 100)
+	for i := 0; i < 20; i++ { //numbers of client
+		time.Sleep(time.Second / 10)
 		// time.Sleep(time.Second * 1000)
 		go func() {
 			clientHandler(ctx, t, server.dispatcher, i)

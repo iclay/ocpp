@@ -113,6 +113,7 @@ func (m *requestQueueMap) pushRequset(id string, request interface{}) error {
 		return fmt.Errorf("push request failed, may be conn has closed down, id(%s), request(%+v)", id, request)
 	}
 	queue.Push(request)
+	log.Debugf("queue remain(%d), id(%s)", queue.Len(), id)
 	return nil
 }
 
@@ -204,6 +205,7 @@ func (d *dispatcher) run() {
 				allow = true
 			}
 		case timeOutFlag := <-d.timeoutC: //timeout trigger
+			id = timeOutFlag.id
 			if ctx, ok = contextMap[id]; ok && ctx.isActive() && timeOutFlag.uniqueid == ctx.uniqueid {
 				ctx.cancel()
 				d.requestDone(id, ctx.uniqueid)
@@ -338,6 +340,7 @@ func (d *dispatcher) appendRequest(ctx context.Context, id string, call *protoco
 		return fmt.Errorf("active call failed, invaild call,id(%s),call(%+v), err(%v)", id, call, checkValidatorError(err, call.Action))
 	}
 	if _, ok := d.server.ocpp16map.GetTraitAction(call.Action); !ok {
+		log.Errorf("active call failed, not support action(%s) current,id(%s), call(%+v)", call.Action, id, call)
 		return fmt.Errorf("active call failed, not support action(%s) current,id(%s), call(%+v)", call.Action, id, call)
 	}
 	req := call.SpecificRequest()

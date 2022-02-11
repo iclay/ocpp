@@ -88,5 +88,6 @@ func (r *reactor) registerConn(conn interface{}) error {
 	c.server.clientOnConnect(c.id, c.fd, c)
 	r.connections.registerConn(c.id, c.fd, c)
 	r.addConnCount(1)
+	go c.writedump()
 	return nil
 }
