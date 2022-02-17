@@ -54,7 +54,7 @@ var fnBootNotificationRequest = func() protocol.BootNotificationRequest {
 
 var fnStatusNotificationRequest = func() protocol.StatusNotificationRequest {
 	return protocol.StatusNotificationRequest{ //valid request
-		ConnectorId:     15,
+		ConnectorId:     10,
 		ErrorCode:       "ConnectorLockFailure",
 		Info:            RandString(40),
 		Status:          "Available",
@@ -82,13 +82,13 @@ var fnAuthorizeRequest = func() protocol.AuthorizeRequest {
 var fnMeterValueRequest = func() protocol.MeterValuesRequest {
 	var meterValueReq = protocol.MeterValuesRequest{
 		ConnectorId:   10,
-		TransactionId: 5,
+		TransactionId: 22,
 	}
 	var meterValue = protocol.MeterValue{
 		Timestamp: time.Now().Format(protocol.ISO8601),
 	}
 	var sampledValue = protocol.SampledValue{
-		Value:   "100",
+		Value:   "50000",
 		Context: "",
 		// Context:   "Interruption.Begin",
 		Format: "Raw",
@@ -131,9 +131,9 @@ var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
 	meterValue.SampledValue = append(meterValue.SampledValue, sampledValue)
 	return protocol.StopTransactionRequest{
 		IdTag:           "qinglianyun",
-		MeterStop:       100,
+		MeterStop:       50000,
 		Timestamp:       time.Now().Format(protocol.ISO8601),
-		TransactionId:   5,
+		TransactionId:   22,
 		Reason:          "EmergencyStop",
 		TransactionData: []protocol.MeterValue{meterValue},
 	}
@@ -336,7 +336,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 					return
 				}
 				t.Logf("test for client call:send id(%v), send msg(%s)", fmt.Sprintf("%s-%s", name, id), string(callMsg))
-				time.Sleep(time.Second * 10)
+				time.Sleep(time.Second / 10)
 			}
 		}
 	}()
@@ -354,7 +354,7 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.Serve(":8000", "/ocpp/:name/:id")
 	}()
-	for i := 0; i < 20; i++ { //numbers of client
+	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		// time.Sleep(time.Second * 1000)
 		go func() {

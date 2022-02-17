@@ -3,6 +3,7 @@ package local
 import (
 	"context"
 	"ocpp16/protocol"
+	"time"
 )
 
 type LocalActionPlugin struct {
@@ -15,6 +16,13 @@ func NewActionPlugin() *LocalActionPlugin {
 	plugin.registerRequestHandler()
 	plugin.registerResponseHandler()
 	return plugin
+}
+
+func (c *LocalActionPlugin) Heartbeat(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.HeartbeatResponse{
+		CurrentTime: time.Now().Format(protocol.ISO8601),
+	}
+	return reply, nil
 }
 
 func (l *LocalActionPlugin) BootNotification(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
@@ -58,6 +66,7 @@ func (l *LocalActionPlugin) DiagnosticsStatusNotification(ctx context.Context, i
 
 func (l *LocalActionPlugin) registerRequestHandler() {
 	l.requestHandlerMap = map[string]protocol.RequestHandler{
+		protocol.HeartbeatName:                  protocol.RequestHandler(l.Heartbeat),
 		protocol.BootNotificationName:           protocol.RequestHandler(l.BootNotification),
 		protocol.StatusNotificationName:         protocol.RequestHandler(l.StatusNotification),
 		protocol.MeterValuesName:                protocol.RequestHandler(l.MeterValues),

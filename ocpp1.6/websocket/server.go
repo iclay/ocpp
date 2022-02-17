@@ -39,8 +39,8 @@ type Server struct {
 	cond              *sync.Cond
 	wg                sync.WaitGroup
 	actionPlugin      ActionPlugin
-	connectHandler    []func(id string) error
-	disconnectHandler []func(id string) error
+	connectHandler    []func(ws *Wsconn) error
+	disconnectHandler []func(ws *Wsconn) error
 }
 
 func logIfError(id string, err error) {
@@ -49,34 +49,34 @@ func logIfError(id string, err error) {
 	}
 }
 
-func (s *Server) clientOnConnect(id string, fd int, ws *wsconn) {
-	s.dispatcher.callStateMap.createNewRequest(id)
-	s.dispatcher.requestQueueMap.createNewQueue(id)
-	s.registerConn(id, fd, ws)
+func (s *Server) clientOnConnect(ws *Wsconn) {
+	s.dispatcher.callStateMap.createNewRequest(ws.id)
+	s.dispatcher.requestQueueMap.createNewQueue(ws.id)
+	s.registerConn(ws.id, ws.fd, ws)
 	if s.connectHandler != nil {
 		for _, handler := range s.connectHandler {
-			go logIfError(id, handler(id))
+			go logIfError(ws.id, handler(ws))
 		}
 	}
 }
 
-func (s *Server) clientOnDisconnect(id string, fd int) {
-	s.deleteConn(id, fd)
-	s.deleteDispatcherQueue(id)
-	s.deleteDispatcherCallState(id)
-	s.cancelContex(id)
+func (s *Server) clientOnDisconnect(ws *Wsconn) {
+	s.deleteConn(ws.id, ws.fd)
+	s.deleteDispatcherQueue(ws.id)
+	s.deleteDispatcherCallState(ws.id)
+	s.cancelContex(ws.id)
 	if s.disconnectHandler != nil {
 		for _, handler := range s.disconnectHandler {
-			go logIfError(id, handler(id))
+			go logIfError(ws.id, handler(ws))
 		}
 	}
 }
 
-func (s *Server) SetConnectHandlers(fns ...func(id string) error) {
+func (s *Server) SetConnectHandlers(fns ...func(ws *Wsconn) error) {
 	s.connectHandler = append(s.connectHandler, fns...)
 }
 
-func (s *Server) SetDisconnetHandlers(fns ...func(id string) error) {
+func (s *Server) SetDisconnetHandlers(fns ...func(ws *Wsconn) error) {
 	s.disconnectHandler = append(s.disconnectHandler, fns...)
 }
 
@@ -84,7 +84,7 @@ func (s *Server) cancelContex(id string) {
 	s.dispatcher.cancelContext(id)
 }
 
-func (s *Server) registerConn(id string, fd int, wsconn *wsconn) {
+func (s *Server) registerConn(id string, fd int, wsconn *Wsconn) {
 	s.wsconns.registerConn(id, fd, wsconn)
 }
 
@@ -92,7 +92,7 @@ func (s *Server) deleteConn(id string, fd int) {
 	s.wsconns.deleteConn(id, fd)
 }
 
-func (s *Server) getConn(id string) (*wsconn, bool) {
+func (s *Server) getConn(id string) (*Wsconn, bool) {
 	return s.wsconns.getConn(id)
 }
 
@@ -294,7 +294,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 		return
 	}
 	// _ = unix.SetNonblock(fd, true)
-	ws := &wsconn{
+	ws := &Wsconn{
 		server:  s,
 		conn:    conn,
 		id:      p.String(),
@@ -310,12 +310,13 @@ func (s *Server) wsHandler(c *gin.Context) {
 	})
 	if conf.UseEpoll {
 		reactor := s.loadBalancer.next()
+		log.Debug("reactor index", reactor.index)
 		if err = reactor.epoller.trigger(reactor.registerConn, ws); err != nil {
 			log.Errorf("id=%s, error=%v", ws.id, err)
 			return
 		}
 	} else {
-		s.clientOnConnect(ws.id, ws.fd, ws)
+		s.clientOnConnect(ws)
 		go ws.readdump()
 		go ws.writedump()
 	}

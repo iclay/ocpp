@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type wsconn struct {
+type Wsconn struct {
 	server  *Server
 	conn    *websocket.Conn
 	id      string
@@ -25,15 +25,15 @@ type wsconn struct {
 }
 
 type wsconns struct {
-	wsmap   map[string]*wsconn
-	wsfdmap map[int]*wsconn
+	wsmap   map[string]*Wsconn
+	wsfdmap map[int]*Wsconn
 	sync.RWMutex
 }
 
 func newWsconns() *wsconns {
 	return &wsconns{
-		wsmap:   make(map[string]*wsconn),
-		wsfdmap: make(map[int]*wsconn),
+		wsmap:   make(map[string]*Wsconn),
+		wsfdmap: make(map[int]*Wsconn),
 	}
 }
 
@@ -44,20 +44,20 @@ func (ws *wsconns) deleteConn(id string, fd int) {
 	delete(ws.wsfdmap, fd)
 }
 
-func (ws *wsconns) registerConn(id string, fd int, wsconn *wsconn) {
+func (ws *wsconns) registerConn(id string, fd int, wsconn *Wsconn) {
 	ws.Lock()
 	defer ws.Unlock()
 	ws.wsmap[id] = wsconn
 	ws.wsfdmap[fd] = wsconn
 }
-func (ws *wsconns) getConn(id string) (*wsconn, bool) {
+func (ws *wsconns) getConn(id string) (*Wsconn, bool) {
 	ws.RLock()
 	defer ws.RUnlock()
 	conn, ok := ws.wsmap[id]
 	return conn, ok
 }
 
-func (ws *wsconns) getConnByFD(fd int) (*wsconn, bool) {
+func (ws *wsconns) getConnByFD(fd int) (*Wsconn, bool) {
 	ws.RLock()
 	defer ws.RUnlock()
 	conn, ok := ws.wsfdmap[fd]
@@ -71,16 +71,20 @@ func (ws *wsconns) connExists(id string) bool {
 	return ok
 }
 
-func (ws *wsconn) stop(err error) {
+func (ws *Wsconn) ID() string {
+	return ws.id
+}
+
+func (ws *Wsconn) stop(err error) {
 	if !ws.closed {
-		ws.server.clientOnDisconnect(ws.id, ws.fd)
+		ws.server.clientOnDisconnect(ws)
 		ws.closeC <- err
 		ws.closed = true
 		ws.conn.Close()
 	}
 }
 
-func (ws *wsconn) readdump() {
+func (ws *Wsconn) readdump() {
 	for {
 		if err := ws.read(); err != nil {
 			ws.Lock()
@@ -91,7 +95,7 @@ func (ws *wsconn) readdump() {
 	}
 }
 
-func (ws *wsconn) read() error {
+func (ws *Wsconn) read() error {
 	typ, message, err := ws.conn.ReadMessage()
 	if err != nil {
 		log.Errorf("read error, id(%s), err(%v)", ws.id, err)
@@ -103,7 +107,7 @@ func (ws *wsconn) read() error {
 	return nil
 }
 
-func (ws *wsconn) responseHandler(uniqueid string, action string, res protocol.Response) {
+func (ws *Wsconn) responseHandler(uniqueid string, action string, res protocol.Response) {
 	if handler, ok := ws.server.actionPlugin.ResponseHandler(action); ok {
 		log.Debugf("client response, id(%s), uniqueid(%s),action(%s), response(%+v)", ws.id, uniqueid, action, res)
 		if err := handler(context.Background(), ws.id, uniqueid, res); err != nil {
@@ -114,8 +118,7 @@ func (ws *wsconn) responseHandler(uniqueid string, action string, res protocol.R
 	log.Errorf("not support action:(%s) current, id:(%s), uniqueid:(%s)", action, ws.id, uniqueid)
 }
 
-func (ws *wsconn) requestHandler(uniqueid string, action string, req protocol.Request) {
-
+func (ws *Wsconn) requestHandler(uniqueid string, action string, req protocol.Request) {
 	if handler, ok := ws.server.actionPlugin.RequestHandler(action); ok {
 		log.Debugf("client request, id(%s), uniqueid(%s),action(%s), request(%+v)", ws.id, uniqueid, action, req)
 		res, err := handler(context.Background(), ws.id, uniqueid, req)
@@ -146,18 +149,18 @@ func (ws *wsconn) requestHandler(uniqueid string, action string, req protocol.Re
 	log.Errorf("not support action:(%s) current, id:(%s), uniqueid:(%s)", action, ws.id, uniqueid)
 }
 
-func (ws *wsconn) setReadDeadTimeout(readTimeout time.Duration) error {
+func (ws *Wsconn) setReadDeadTimeout(readTimeout time.Duration) error {
 	ws.Lock()
 	defer ws.Unlock()
 	return ws.conn.SetReadDeadline(time.Now().Add(readTimeout))
 }
 
-func (ws *wsconn) setWriteDeadTimeout(readTimeout time.Duration) error {
+func (ws *Wsconn) setWriteDeadTimeout(readTimeout time.Duration) error {
 	//this function is always accompanied by writemessage, so there is no need to lock it
 	return ws.conn.SetWriteDeadline(time.Now().Add(readTimeout))
 }
 
-func (ws *wsconn) writeMessage(messageType int, data []byte) error {
+func (ws *Wsconn) writeMessage(messageType int, data []byte) error {
 	ws.Lock()
 	defer ws.Unlock()
 	if ws.closed {
@@ -171,7 +174,7 @@ func (ws *wsconn) writeMessage(messageType int, data []byte) error {
 	return err
 }
 
-func (ws *wsconn) sendCallError(uniqueID string, e *Error) error {
+func (ws *Wsconn) sendCallError(uniqueID string, e *Error) error {
 	callError := &protocol.CallError{
 		MessageTypeID:    protocol.CALL_ERROR,
 		UniqueID:         uniqueID,
@@ -203,7 +206,7 @@ const (
 	CallError  = protocol.CallErrorName
 )
 
-func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
+func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
 
 	if len(fields) != 4 {
 		log.Errorf("invalid num of call fields(%+v),exptect 4 fields, id(%s), wsmsg(%s),wsmsg_type(%s)", fields, ws.id, string(wsmsg), Call)
@@ -276,7 +279,7 @@ func (ws *wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 	}
 	ws.requestHandler(uniqueid, action, req.(protocol.Request))
 }
-func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
+func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
 	if len(fields) != 3 {
 		log.Errorf("invalid num of call fields(%+v),exptect 3 fields,id(%s),msg(%s),wsmsg_type(%s)", fields, ws.id, string(wsmsg), CallResult)
 		if err := ws.sendCallError(uniqueid, &Error{
@@ -354,7 +357,7 @@ func (ws *wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 	ws.responseHandler(uniqueid, action, res.(protocol.Response))
 }
 
-func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
+func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []interface{}) {
 	if len(fields) != 5 {
 		log.Errorf("invalid num of call fields(%+v), id(%s), wsmsg(%s),wsg_type(%d),exptect 5 fields", fields, ws.id, string(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
@@ -422,7 +425,7 @@ func (ws *wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 	ws.responseHandler(uniqueid, protocol.CallErrorName, &callError)
 }
 
-func (ws *wsconn) messageHandler(wsmsg []byte) {
+func (ws *Wsconn) messageHandler(wsmsg []byte) {
 	fields, err := parseMessage(wsmsg)
 	if err != nil {
 		log.Errorf("parse wsmessage error, id(%s), wsmsg(%s), err(%v)", ws.id, string(wsmsg), err)
@@ -456,7 +459,11 @@ func (ws *wsconn) messageHandler(wsmsg []byte) {
 	return
 }
 
-func (ws *wsconn) writedump() {
+func (ws *Wsconn) writedump() {
+	log.Debug("writebegin", ws.id)
+	defer func() {
+		log.Debug("writeend", ws.id)
+	}()
 	for {
 		select {
 		case ping := <-ws.ping:

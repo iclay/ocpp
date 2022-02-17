@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"ocpp16/config"
 	"ocpp16/logwriter"
-	registry "ocpp16/plugin/active/rpcx"
-	rpcx "ocpp16/plugin/passive/rpcx"
-	// registry "ocpp16/plugin/active/local"
+	// active "ocpp16/plugin/active/local"
+	// passive "ocpp16/plugin/passive/local"
 	log "github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
+	active "ocpp16/plugin/active/rpcx"
+	passive "ocpp16/plugin/passive/rpcx"
 	"ocpp16/websocket"
 	"os"
-	// "syscall"
 	"time"
 )
 
@@ -95,17 +95,19 @@ func serve(c *cli.Context) error {
 	websocket.SetLogger(lg)
 	server := websocket.NewDefaultServer()
 	defer server.Stop()
-	actionPlugin := rpcx.NewActionPlugin()
+	actionPlugin := passive.NewActionPlugin()
 	server.RegisterActionPlugin(actionPlugin)
-	server.SetConnectHandlers(func(id string) error {
-		lg.Debugf("id(%s) connect,time(%s)", id, time.Now().Format(time.RFC3339))
+	server.SetConnectHandlers(func(ws *websocket.Wsconn) error {
+		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	})
-	server.SetDisconnetHandlers(func(id string) error {
-		lg.Debugf("id(%s) disconnect,time(%s)", id, time.Now().Format(time.RFC3339))
+	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error {
+		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
-	}, actionPlugin.ChargingPointOffline)
-	server.RegisterActiveCallHandler(server.HandleActiveCall, registry.NewActiveCallPlugin)
+	}, func(ws *websocket.Wsconn) error {
+		return actionPlugin.ChargingPointOffline(ws.ID())
+	})
+	server.RegisterActiveCallHandler(server.HandleActiveCall, active.NewActiveCallPlugin)
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
 		wsAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WsPort)
@@ -115,6 +117,5 @@ func serve(c *cli.Context) error {
 		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
-
 	return nil
 }

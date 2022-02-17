@@ -80,12 +80,12 @@ func (r *reactor) addConnCount(delta int32) {
 }
 
 func (r *reactor) registerConn(conn interface{}) error {
-	c := conn.(*wsconn)
+	c := conn.(*Wsconn)
 	if err := r.epoller.addRead(c.fd); err != nil {
 		c.conn.Close()
 		return err
 	}
-	c.server.clientOnConnect(c.id, c.fd, c)
+	c.server.clientOnConnect(c)
 	r.connections.registerConn(c.id, c.fd, c)
 	r.addConnCount(1)
 	go c.writedump()
