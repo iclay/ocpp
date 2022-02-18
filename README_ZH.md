@@ -48,42 +48,42 @@ import (
 	"time"
 )
 func main() {
-    //解析自定义配置文件
+        //解析自定义配置文件
 	config.ParseFile(c.String("config")) 
 	config.Print()
 	conf := config.GCONF
 	lg := initLogger()
 	websocket.SetLogger(lg)
-    //启动一个默认充电系统服务
+      //启动一个默认充电系统服务
 	server := websocket.NewDefaultServer() 
 	defer server.Stop() 
-    //自定义passive插件，当前使用的是rpcx插件
+        //自定义passive插件，当前使用的是rpcx插件
 	actionPlugin := passive.NewActionPlugin() 
-     //将该passive插件集成到充电系统中，充电系统来代理插件来执行插件内的自定义功能
+        //将该passive插件集成到充电系统中，充电系统来代理插件来执行插件内的自定义功能
 	server.RegisterActionPlugin(actionPlugin)
-    //充电桩连接到充电系统的自定义回调函数
+        //充电桩连接到充电系统的自定义回调函数
 	server.SetConnectHandlers(func(ws *websocket.Wsconn) error { 
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	})
-    //充电桩断开连接的自定义回调函数
+        //充电桩断开连接的自定义回调函数
 	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error { 
 		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	}, func(ws *websocket.Wsconn) error {
 		return actionPlugin.ChargingPointOffline(ws.ID())
 	})
-    //将自定义的active插件集成到充电系统中，当前使用的是rpcx插件,充电系统来代理插件下发命令到充电桩
+        //将自定义的active插件集成到充电系统中，当前使用的是rpcx插件,充电系统来代理插件下发命令到充电桩
 	server.RegisterActiveCallHandler(server.HandleActiveCall, active.NewActiveCallPlugin) 
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
 		wsAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WsPort)
-        //server启动ws服务
+                //server启动ws服务
 		server.Serve(wsAddr, ServiceURI) 
 	}
 	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
 		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
-         //server启动wss服务
+              //server启动wss服务
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
 	return nil
