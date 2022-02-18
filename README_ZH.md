@@ -43,7 +43,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 	active "ocpp16/plugin/active/rpcx" //rpcx实现的active插件，用于在分布式服务中
 	passive "ocpp16/plugin/passive/rpcx" //rpcx实现的passive插件，用于在分布式服务中
-	"ocpp16/websocket" //websocket底层通信库
+	"ocpp16/websocket"
 	"os"
 	"time"
 )
