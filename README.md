@@ -38,9 +38,9 @@ import (
 	"ocpp16/config" 
 	"ocpp16/logwriter"
         //An active plug-in implemented locally, which is used in stand-alone services
-	    // active "ocpp16/plugin/active/local" 
+	// active "ocpp16/plugin/active/local" 
         //The passive plug-in implemented locally is used in stand-alone services
-	    // passive "ocpp16/plugin/passive/local"
+	 // passive "ocpp16/plugin/passive/local"
 	log "github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
         //The active plug-in implemented by rpcx is used in distributed services
@@ -66,7 +66,7 @@ func main() {
 	actionPlugin := passive.NewActionPlugin() 
         //Integrate the passive plug-in into the charging system, and the charging system will proxy the plug-in to perform the custom functions in the plug-in
 	server.RegisterActionPlugin(actionPlugin)
-    //Custom callback function of charging point connected to charging system
+        //Custom callback function of charging point connected to charging system
 	server.SetConnectHandlers(func(ws *websocket.Wsconn) error { 
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
@@ -83,12 +83,12 @@ func main() {
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
 		wsAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WsPort)
-            //Server starts ws service
+                //Server starts ws service
 		server.Serve(wsAddr, ServiceURI) 
 	}
 	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
 		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
-            //Server starts the wss service
+                //Server starts the wss service
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
 	return nil
