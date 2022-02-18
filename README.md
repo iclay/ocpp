@@ -16,7 +16,7 @@ If you want to integrate the custom function plug-in into the communication serv
     func NewActiveCallPlugin(handler websocket.ActiveCallHandler)
   ```
 
-- **passive**: Under this directory, the charging system needs to realize the user-defined function plug-in after receiving the active request of the charging point. At present, local and rpcx plug-ins are supported. See passive / readme for the use of user-defined plug-ins md
+- **passive**: Under this directory, the charging system needs to realize the user-defined function plug-in after receiving the active request of the charging point. At present, local and rpcx plug-ins are supported. See passive/readme for the use of user-defined plug-ins md
     ```go
     //The plug-in must implement the actionplugin interface. Please refer to the implementation method of (passive/local/plugin.go)
     type ActionPlugin interface {
