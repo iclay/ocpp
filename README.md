@@ -37,17 +37,17 @@ import (
 	"fmt"
 	"ocpp16/config" 
 	"ocpp16/logwriter"
-    //An active plug-in implemented locally, which is used in stand-alone services
-	// active "ocpp16/plugin/active/local" 
-    //The passive plug-in implemented locally is used in stand-alone services
-	// passive "ocpp16/plugin/passive/local"
+        //An active plug-in implemented locally, which is used in stand-alone services
+	    // active "ocpp16/plugin/active/local" 
+        //The passive plug-in implemented locally is used in stand-alone services
+	    // passive "ocpp16/plugin/passive/local"
 	log "github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
-    //The active plug-in implemented by rpcx is used in distributed services
+        //The active plug-in implemented by rpcx is used in distributed services
 	active "ocpp16/plugin/active/rpcx"
-    //The passive plug-in implemented by rpcx is used in distributed services
+        //The passive plug-in implemented by rpcx is used in distributed services
 	passive "ocpp16/plugin/passive/rpcx" 
-    //Bottom communication library of websocket
+        //Bottom communication library of websocket
 	"ocpp16/websocket" 
 	"os"
 	"time"
@@ -59,12 +59,12 @@ func main() {
 	conf := config.GCONF
 	lg := initLogger()
 	websocket.SetLogger(lg)
-    //Start a default charging system service
+        //Start a default charging system service
 	server := websocket.NewDefaultServer() 
 	defer server.Stop() 
-    //Customize the passive plug-in. The rpcx plug-in is currently used
+        //Customize the passive plug-in. The rpcx plug-in is currently used
 	actionPlugin := passive.NewActionPlugin() 
-    //Integrate the passive plug-in into the charging system, and the charging system will proxy the plug-in to perform the custom functions in the plug-in
+        //Integrate the passive plug-in into the charging system, and the charging system will proxy the plug-in to perform the custom functions in the plug-in
 	server.RegisterActionPlugin(actionPlugin)
     //Custom callback function of charging point connected to charging system
 	server.SetConnectHandlers(func(ws *websocket.Wsconn) error { 
@@ -83,12 +83,12 @@ func main() {
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
 		wsAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WsPort)
-        //Server starts ws service
+            //Server starts ws service
 		server.Serve(wsAddr, ServiceURI) 
 	}
 	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
 		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
-         //Server starts the wss service
+            //Server starts the wss service
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
 	return nil
