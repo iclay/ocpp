@@ -53,7 +53,7 @@ import (
 	"time"
 )
 func main() {
-    //Configuration file
+        //Configuration file
 	config.ParseFile(c.String("config")) 
 	config.Print()
 	conf := config.GCONF
@@ -71,14 +71,14 @@ func main() {
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	})
-    //Custom callback function for charging point disconnection
+        //Custom callback function for charging point disconnection
 	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error { 
 		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	}, func(ws *websocket.Wsconn) error {
 		return actionPlugin.ChargingPointOffline(ws.ID())
 	})
-    //The user-defined active plug-in is integrated into the charging system. Currently, the rpcx plug-in is used. The charging  system sends commands to the charging pile on behalf of the plug-in
+        //The user-defined active plug-in is integrated into the charging system. Currently, the rpcx plug-in is used. The charging  system sends commands to the charging pile on behalf of the plug-in
 	server.RegisterActiveCallHandler(server.HandleActiveCall, active.NewActiveCallPlugin) 
 	ServiceAddr, ServiceURI := conf.ServiceAddr, conf.ServiceURI
 	if conf.WsEnable {
