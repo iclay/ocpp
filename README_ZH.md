@@ -83,7 +83,7 @@ func main() {
 	}
 	if conf.WssEnable && conf.TLSCertificate != "" && conf.TLSCertificateKey != "" {
 		wssAddr := fmt.Sprintf("%s:%d", ServiceAddr, conf.WssPort)
-              //server启动wss服务
+                //server启动wss服务
 		server.ServeTLS(wssAddr, ServiceURI, conf.TLSCertificate, conf.TLSCertificateKey)
 	}
 	return nil
