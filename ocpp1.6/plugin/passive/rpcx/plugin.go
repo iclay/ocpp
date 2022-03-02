@@ -126,6 +126,16 @@ func (c *RPCXPlugin) ChargingPointOffline(id string) error {
 	return err
 }
 
+func (c *RPCXPlugin) ChargingPointOnline(id string) error {
+	type OnlineNotice struct {
+		ChargingPointIdentify string `json:"ChargingPointIdentify"`
+	}
+	req := &OnlineNotice{ChargingPointIdentify: id}
+	reply := &Reply{}
+	err := c.chargingCore.Call(context.TODO(), "ChargingPointOnline", req, reply)
+	return err
+}
+
 // firmwareManagement - request
 func (c *RPCXPlugin) FirmwareStatusNotification(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
 	reply := &protocol.FirmwareStatusNotificationResponse{}

@@ -43,19 +43,18 @@ type Server struct {
 	disconnectHandler []func(ws *Wsconn) error
 }
 
-func logIfError(id string, err error) {
-	if err != nil {
-		log.Errorf("id(%s),error(%v)", id, err)
-	}
-}
-
 func (s *Server) clientOnConnect(ws *Wsconn) {
 	s.dispatcher.callStateMap.createNewRequest(ws.id)
 	s.dispatcher.requestQueueMap.createNewQueue(ws.id)
 	s.registerConn(ws.id, ws.fd, ws)
 	if s.connectHandler != nil {
 		for _, handler := range s.connectHandler {
-			go logIfError(ws.id, handler(ws))
+			go func() {
+				if err := handler(ws); err != nil {
+					log.Errorf("id(%s),error(%v)", ws.id, err)
+				}
+			}()
+			time.Sleep(time.Millisecond)
 		}
 	}
 }
@@ -67,7 +66,12 @@ func (s *Server) clientOnDisconnect(ws *Wsconn) {
 	s.cancelContex(ws.id)
 	if s.disconnectHandler != nil {
 		for _, handler := range s.disconnectHandler {
-			go logIfError(ws.id, handler(ws))
+			go func() {
+				if err := handler(ws); err != nil {
+					log.Errorf("id(%s),error(%v)", ws.id, err)
+				}
+			}()
+			time.Sleep(time.Millisecond)
 		}
 	}
 }

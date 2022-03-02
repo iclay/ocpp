@@ -1,7 +1,6 @@
 package logwriter
 
 import (
-	"log"
 	"os"
 	"testing"
 	"time"

@@ -100,6 +100,8 @@ func serve(c *cli.Context) error {
 	server.SetConnectHandlers(func(ws *websocket.Wsconn) error {
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
+	}, func(ws *websocket.Wsconn) error {
+		return actionPlugin.ChargingPointOnline(ws.ID())
 	})
 	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error {
 		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))

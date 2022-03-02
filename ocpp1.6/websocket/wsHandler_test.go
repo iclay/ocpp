@@ -301,7 +301,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 			case <-ctx.Done():
 				return
 			default:
-				var action = "BootNotification"
+				var action = "MeterValues"
 				call := &protocol.Call{
 					MessageTypeID: protocol.CALL,
 					UniqueID:      RandString(7),
