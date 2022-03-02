@@ -69,15 +69,14 @@ go build stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
         
 
   - 测试客户端内核优化   
-  vim /etc/sysctl.conf 在文件最后添加      
-  ``` 
-  net.ipv4.ip_local_port_range = 1024 65000
-  net.ipv4.tcp_mem = 786432 2097152 3145728
-  net.ipv4.tcp_rmem = 4096 4096 16777216
-  net.ipv4.tcp_wmem = 4096 4096 16777216
-  ```
-        
-  然后运行 sysctl -p使得配置生效   
+  vim /etc/sysctl.conf 在文件最后添加   
+   ``` 
+   net.ipv4.ip_local_port_range = 1024 65000
+   net.ipv4.tcp_mem = 786432 2097152 3145728
+   net.ipv4.tcp_rmem = 4096 4096 16777216
+   net.ipv4.tcp_wmem = 4096 4096 16777216
+   ```
+   然后运行 sysctl -p使得配置生效   
 
 
 ### 压测结果
