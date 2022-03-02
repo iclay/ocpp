@@ -31,39 +31,37 @@ go build stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
 - 内核优化    
 
   - 测试服务端内核优化    
-        ```
-        # 查看系统默认的值
-        ulimit -n
-        # 临时设置最大打开文件数
-        ulimit -n 1040000
-        ```
+    ```
+    # 查看系统默认的值
+    ulimit -n
+    # 临时设置最大打开文件数
+    ulimit -n 1040000
+    ```
+    或者 vim /etc/security/limits.conf 添加
+    ```
+    # 添加以下参数
+    root soft nofile 1040000
+    root hard nofile 1040000
+    root soft nproc 1040000
+    root hard nproc 1040000
 
-        或者 vim /etc/security/limits.conf 添加
-        ```
-        # 添加以下参数
-        root soft nofile 1040000
-        root hard nofile 1040000
-        root soft nproc 1040000
-        root hard nproc 1040000
+    * soft nofile 1040000
+    * hard nofile 1040000
+    * soft nproc 1040000
+    * hard nproc 1040000
 
-        * soft nofile 1040000
-        * hard nofile 1040000
-        * soft nproc 1040000
-        * hard nproc 1040000
+    root soft core unlimited
+    root hard core unlimited
 
-        root soft core unlimited
-        root hard core unlimited
+    * soft core unlimited
+    * hard core unlimited
+    ```
 
-        * soft core unlimited
-        * hard core unlimited
-        ```
-
-        由于file-max的值小于limits设置的值会导致系统重启以后无法登录，需要执行下面命令
-        ```
-        echo 12553500 > /proc/sys/fs/file-max
-        ```
-
-        最后重启服务器, ulimit -n命令查看是否生效
+    由于file-max的值小于limits设置的值会导致系统重启以后无法登录，需要执行下面命令
+    ```
+    echo 12553500 > /proc/sys/fs/file-max
+    ```
+    最后重启服务器, ulimit -n命令查看是否生效
 
 
         
