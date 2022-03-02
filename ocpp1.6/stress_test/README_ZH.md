@@ -76,7 +76,7 @@ go build stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
     net.ipv4.tcp_rmem = 4096 4096 16777216
     net.ipv4.tcp_wmem = 4096 4096 16777216
     ```
-   然后运行 sysctl -p使得配置生效   
+    然后运行 sysctl -p使得配置生效   
 
 
 ### 压测结果
