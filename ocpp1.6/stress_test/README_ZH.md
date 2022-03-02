@@ -82,7 +82,7 @@ go build stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
 
 ### 压测结果
 
-![压测50000 websocket连接](http://git.qinglianyun.office/cloud/ocpp/blob/dev/ocpp1.6/stress_test/image/50000.png)
+![压测50000 websocket连接](https://github.com/iclay/ocpp/tree/main/ocpp1.6/stress_test/image/50000.png)
   ```
   [root@ocpp-test ~]# ./stress -c 50000 -n 10 -u ws://10.66.0.47:8090 -d 5
      耗时(s)│ 连接数  │请求成功数 │请求失败数 │最长耗时(ms) │最短耗时(ms)      │平均耗时(ms)  │状态码
