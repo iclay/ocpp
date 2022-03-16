@@ -163,6 +163,13 @@ func (d *dispatcher) stop(err error) {
 //According to the protocol, the next request can be sent only when the previous request is replied or the reply times out
 //don't try to modify the code unless you know what to do
 func (d *dispatcher) run() {
+	defer func() {
+		if p := recover(); p != nil {
+			var buf [4096]byte
+			n := runtime.Stack(buf[:], false)
+			log.Errorf("dispatcher exits from panic: %s\n", string(buf[:n]))
+		}
+	}()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	contextMap := make(map[string]timeoutContext)
