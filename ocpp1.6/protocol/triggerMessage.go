@@ -37,7 +37,7 @@ const (
 
 type TriggerMessageRequest struct {
 	RequestedMessage MessageTrigger `json:"requestedMessage" validate:"required,messageTrigger"`
-	ConnectorId      int            `json:"connectorId,omitempty" validate:"omitempty,gt=0"`
+	ConnectorId      *int           `json:"connectorId,omitempty" validate:"omitempty,gt=0"`
 }
 
 func (TriggerMessageRequest) Action() string {

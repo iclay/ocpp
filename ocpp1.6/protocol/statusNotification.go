@@ -64,13 +64,13 @@ const (
 )
 
 type StatusNotificationRequest struct {
-	ConnectorId     int                  `json:"connectorId" validate:"required,gte=0"`
+	ConnectorId     *int                 `json:"connectorId" validate:"required,gte=0"`
 	ErrorCode       ChargePointErrorCode `json:"errorCode" validate:"required,chargePointErrorCode"`
-	Info            string               `json:"info,omitempty" validate:"max=50"`
+	Info            string               `json:"info,omitempty" validate:"omitempty,max=50"`
 	Status          ChargePointStatus    `json:"status" validate:"required,chargePointStatus"`
 	Timestamp       string               `json:"timestamp,omitempty" validate:"omitempty,dateTime"`
-	VendorId        string               `json:"vendorId,omitempty" validate:"max=255"`
-	VendorErrorCode string               `json:"vendorErrorCode,omitempty" validate:"max=50"`
+	VendorId        string               `json:"vendorId,omitempty" validate:"omitempty,max=255"`
+	VendorErrorCode string               `json:"vendorErrorCode,omitempty" validate:"omitempty,max=50"`
 }
 
 func (StatusNotificationRequest) Action() string {

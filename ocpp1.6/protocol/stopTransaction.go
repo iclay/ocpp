@@ -36,10 +36,10 @@ const (
 )
 
 type StopTransactionRequest struct {
-	IdTag           IdToken      `json:"idTag,omitempty" validate:"max=20"`
-	MeterStop       int          `json:"meterStop" validate:"required,gte=0"`
+	IdTag           IdToken      `json:"idTag,omitempty" validate:"omitempty,max=20"`
+	MeterStop       *int         `json:"meterStop" validate:"required,gte=0"`
 	Timestamp       string       `json:"timestamp" validate:"required,dateTime"`
-	TransactionId   int          `json:"transactionId" validate:"required"`
+	TransactionId   *int         `json:"transactionId" validate:"required"`
 	Reason          Reason       `json:"reason,omitempty" validate:"omitempty,reason"`
 	TransactionData []MeterValue `json:"transactionData,omitempty" validate:"omitempty,dive"`
 }

@@ -183,8 +183,8 @@ type MeterValue struct {
 }
 
 type MeterValuesRequest struct {
-	ConnectorId   int          `json:"connectorId" validate:"required,gte=0"`
-	TransactionId int          `json:"transactionId,omitempty"`
+	ConnectorId   *int         `json:"connectorId" validate:"required,gte=0"`
+	TransactionId *int         `json:"transactionId,omitempty" validate:"omitempty"`
 	MeterValue    []MeterValue `json:"meterValue"    validate:"required,min=1,dive"`
 }
 

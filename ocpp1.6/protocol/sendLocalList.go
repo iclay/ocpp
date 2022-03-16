@@ -46,7 +46,7 @@ type AuthorizationData struct {
 }
 
 type SendLocalListRequest struct {
-	ListVersion            int                 `json:"listVersion" validate:"gte=0"`
+	ListVersion            *int                `json:"listVersion" validate:"required,gte=0"`
 	LocalAuthorizationList []AuthorizationData `json:"localAuthorizationList,omitempty" validate:"omitempty,dive"`
 	UpdateType             UpdateType          `json:"updateType" validate:"required,updateType"`
 }

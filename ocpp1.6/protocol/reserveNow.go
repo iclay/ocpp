@@ -27,11 +27,11 @@ func init() {
 }
 
 type ReserveNowRequest struct {
-	ConnectorId   int    `json:"connectorId" validate:"gte=0"`
+	ConnectorId   *int   `json:"connectorId" validate:"required,gte=0"`
 	ExpiryDate    string `json:"expiryDate" validate:"required,dateTime"`
 	IdTag         string `json:"idTag" validate:"required,max=20"`
-	ParentIdTag   string `json:"parentIdTag,omitempty" validate:"max=20"`
-	ReservationId int    `json:"reservationId"`
+	ParentIdTag   string `json:"parentIdTag,omitempty" validate:"omitempty,max=20"`
+	ReservationId *int   `json:"reservationId" validate:"required"`
 }
 
 func (ReserveNowRequest) Action() string {

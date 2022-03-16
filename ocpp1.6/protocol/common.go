@@ -36,16 +36,16 @@ const (
 )
 
 type ChargingSchedulePeriod struct {
-	StartPeriod  int     `json:"startPeriod" validate:"required,gte=0"`
-	Limit        float64 `json:"limit" validate:"required,gte=0"`
-	NumberPhases int     `json:"numberPhases,omitempty" validate:"omitempty,gte=0"`
+	StartPeriod  *int     `json:"startPeriod" validate:"required,gte=0"`
+	Limit        *float64 `json:"limit" validate:"required,gte=0"`
+	NumberPhases *int     `json:"numberPhases,omitempty" validate:"omitempty,gte=0"`
 }
 type ChargingSchedule struct {
-	Duration               int                      `json:"duration,omitempty" validate:"omitempty,gte=0"`
+	Duration               *int                     `json:"duration,omitempty" validate:"omitempty,gte=0"`
 	StartSchedule          string                   `json:"startSchedule,omitempty" validate:"omitempty"`
 	ChargingRateUnit       ChargingRateUnitType     `json:"chargingRateUnit" validate:"required,chargingRateUnit"`
 	ChargingSchedulePeriod []ChargingSchedulePeriod `json:"chargingSchedulePeriod" validate:"required,min=1"`
-	MinChargingRate        float64                  `json:"minChargingRate,omitempty" validate:"omitempty"`
+	MinChargingRate        *float64                 `json:"minChargingRate,omitempty" validate:"omitempty"`
 }
 
 func init() {

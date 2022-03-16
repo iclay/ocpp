@@ -22,8 +22,8 @@ func init() {
 }
 
 type GetCompositeScheduleRequest struct {
-	ConnectorId      int                  `json:"connectorId" validate:"gte=0"`
-	Duration         int                  `json:"duration" validate:"gte=0"`
+	ConnectorId      *int                 `json:"connectorId" validate:"required,gte=0"`
+	Duration         *int                 `json:"duration" validate:"required,gte=0"`
 	ChargingRateUnit ChargingRateUnitType `json:"chargingRateUnit,omitempty" validate:"omitempty,chargingRateUnit"`
 }
 
@@ -33,7 +33,7 @@ func (GetCompositeScheduleRequest) Action() string {
 
 type GetCompositeScheduleResponse struct {
 	Status           GetCompositeScheduleStatus `json:"status" validate:"required,compositeScheduleStatus"`
-	ConnectorId      int                        `json:"connectorId,omitempty" validate:"omitempty,gt=0"`
+	ConnectorId      *int                       `json:"connectorId,omitempty" validate:"omitempty,gt=0"`
 	ScheduleStart    string                     `json:"scheduleStart,omitempty" validate:"omitempty,dateTime"`
 	ChargingSchedule ChargingSchedule           `json:"chargingSchedule,omitempty" validate:"omitempty"`
 }

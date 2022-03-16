@@ -23,7 +23,7 @@ const (
 )
 
 type SetChargingProfileRequest struct {
-	ConnectorId     int             `json:"connectorId" validate:"required,gte=0"`
+	ConnectorId     *int            `json:"connectorId" validate:"required,gte=0"`
 	ChargingProfile ChargingProfile `json:"csChargingProfiles" validate:"required"`
 }
 

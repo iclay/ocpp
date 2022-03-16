@@ -18,7 +18,7 @@ func init() {
 }
 
 type RemoteStopTransactionRequest struct {
-	TransactionId int `json:"transactionId" validate:"required"`
+	TransactionId *int `json:"transactionId" validate:"required"`
 }
 
 func (RemoteStopTransactionRequest) Action() string {

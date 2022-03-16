@@ -55,9 +55,9 @@ const (
 )
 
 type ChargingProfile struct {
-	ChargingProfiled       int                        `json:"chargingProfileId" validate:"required"`
-	TransactionId          int                        `json:"transactionId,omitempty" validate:"omitempty"`
-	StackLevel             int                        `json:"stackLevel" validate:"required,gte=0"`
+	ChargingProfiled       *int                       `json:"chargingProfileId" validate:"required"`
+	TransactionId          *int                       `json:"transactionId,omitempty" validate:"omitempty"`
+	StackLevel             *int                       `json:"stackLevel" validate:"required,gte=0"`
 	ChargingProfilePurpose ChargingProfilePurposeType `json:"chargingProfilePurpose" validate:"required,chargingProfilePurpose"`
 	ChargingProfileKind    ChargingProfileKindType    `json:"chargingProfileKind" validate:"required,chargingProfileKind"`
 	RecurrencyKind         RecurrencyKindType         `json:"recurrencyKind,omitempty" validate:"omitempty,recurrencyKind"`
@@ -67,7 +67,7 @@ type ChargingProfile struct {
 }
 
 type RemoteStartTransactionRequest struct {
-	ConnectorId     int              `json:"connectorId,omitempty" validate:"omitempty,gte=0"`
+	ConnectorId     *int             `json:"connectorId,omitempty" validate:"omitempty,gte=0"`
 	IdTag           IdToken          `json:"idTag" validate:"required,max=20"`
 	ChargingProfile *ChargingProfile `json:"chargingProfile,omitempty" validate:"omitempty"`
 }

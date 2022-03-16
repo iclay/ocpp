@@ -52,7 +52,7 @@ const (
 )
 
 type ChangeAvailabilityRequest struct {
-	ConnectorId int              `json:"connectorId" validate:"gte=0"`
+	ConnectorId *int             `json:"connectorId" validate:"required,gte=0"`
 	Type        AvailabilityType `json:"type" validate:"required,availabilityType"`
 }
 

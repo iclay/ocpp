@@ -57,17 +57,19 @@ var fnBootNotificationRequestFailed = func() BootNotificationRequest {
 }
 
 var fnBootNotificationResponseSuccess = func() BootNotificationResponse {
+	Interval := 10
 	return BootNotificationResponse{
 		CurrentTime: time.Now().Format(time.RFC3339),
-		Interval:    10,
+		Interval:    &Interval,
 		Status:      "Accepted",
 	}
 }
 
 var fnBootNotificationResponseFailed = func() BootNotificationResponse {
+	Interval := 10
 	return BootNotificationResponse{
 		CurrentTime: time.Now().Format(time.RFC3339),
-		Interval:    10,
+		Interval:    &Interval,
 		Status:      "Accepted1",
 	}
 }
@@ -222,20 +224,20 @@ func TestBootNotificationRequest(t *testing.T) {
 }
 
 func BootNotificationResponseSuccess() *BootNotificationResponse {
-
+	Interval := 10
 	return &BootNotificationResponse{
 		CurrentTime: time.Now().Format(time.RFC3339),
-		Interval:    10,
+		Interval:    &Interval,
 		Status:      "Accepted",
 	}
 
 }
 
 func BootNotificationResponseFail() *BootNotificationResponse {
-
+	Interval := -1
 	return &BootNotificationResponse{
 		CurrentTime: "wpqppq",
-		Interval:    -1,
+		Interval:    &Interval,
 		Status:      "accepted",
 	}
 }
@@ -266,9 +268,9 @@ func TestBootNotificationResponse(t *testing.T) {
 /*****************StatusNotification ***************/
 
 func StatusNotificationRequestSuccess() *StatusNotificationRequest {
-
+	ConnectorId := 15
 	return &StatusNotificationRequest{
-		ConnectorId: 15,
+		ConnectorId: &ConnectorId,
 		ErrorCode:   "ConnectorLockFailure",
 		Info:        RandomString(40),
 		Status:      "Available",
@@ -281,9 +283,10 @@ func StatusNotificationRequestSuccess() *StatusNotificationRequest {
 }
 
 func StatusNotificationRequestFail() *StatusNotificationRequest {
+	ConnectorId := -5
 
 	return &StatusNotificationRequest{
-		ConnectorId:     -5,
+		ConnectorId:     &ConnectorId,
 		ErrorCode:       "onnectorLockFailure",
 		Info:            RandomString(60),
 		Status:          "vailable",
@@ -319,9 +322,11 @@ func TestStatusNotificationRequest(t *testing.T) {
 /*****************metervalue***************/
 
 func MeterValueRequestSuccess() *MeterValuesRequest {
+	ConnectorId := 10
+	TransactionId := 1
 	var meterValueReq = &MeterValuesRequest{
-		ConnectorId:   10,
-		TransactionId: 1,
+		ConnectorId:   &ConnectorId,
+		TransactionId: &TransactionId,
 	}
 	var meterValue = MeterValue{
 		Timestamp: time.Now().Format(time.RFC3339),
@@ -341,10 +346,12 @@ func MeterValueRequestSuccess() *MeterValuesRequest {
 }
 
 func MeterValueRequestFail() *MeterValuesRequest {
+	ConnectorId := -1
+	TransactionId := -1
 
 	var meterValueReq = &MeterValuesRequest{
-		ConnectorId:   -1,
-		TransactionId: -1,
+		ConnectorId:   &ConnectorId,
+		TransactionId: &TransactionId,
 		MeterValue:    []MeterValue{},
 	}
 
@@ -366,10 +373,12 @@ func MeterValueRequestFail() *MeterValuesRequest {
 }
 
 func MeterValueRequestFailEmptyMeterValue() *MeterValuesRequest {
+	ConnectorId := 1
+	TransactionId := -1
 
 	var meterValueReq = &MeterValuesRequest{
-		ConnectorId:   1,
-		TransactionId: -1,
+		ConnectorId:   &ConnectorId,
+		TransactionId: &TransactionId,
 		MeterValue:    []MeterValue{},
 	}
 	return meterValueReq
@@ -485,23 +494,27 @@ func TestAuthorizeResponse(t *testing.T) {
 
 func StartTransactionRequestSuccess() *StartTransactionRequest {
 	MeterStart := 10
+	ConnectorId := 0
+	// ReservationId := 10
 	return &StartTransactionRequest{
-		ConnectorId:   10,
-		IdTag:         IdToken(RandomString(15)),
-		MeterStart:    &MeterStart,
-		ReservationId: 10,
-		Timestamp:     time.Now().Format(time.RFC3339),
+		ConnectorId: &ConnectorId,
+		IdTag:       IdToken(RandomString(15)),
+		MeterStart:  &MeterStart,
+		// ReservationId: &ReservationId,
+		Timestamp: time.Now().Format(time.RFC3339),
 	}
 
 }
 
 func StartTransactionRequestFail() *StartTransactionRequest {
 	MeterStart := 10
+	ConnectorId := -1
+	ReservationId := 10
 	return &StartTransactionRequest{
-		ConnectorId:   -1,
+		ConnectorId:   &ConnectorId,
 		IdTag:         IdToken(RandomString(25)),
 		MeterStart:    &MeterStart,
-		ReservationId: 10,
+		ReservationId: &ReservationId,
 		Timestamp:     "2021-12-13",
 	}
 }
@@ -517,6 +530,10 @@ func testStartTransactionRequest(call *StartTransactionRequest, t *testing.T) {
 		t.Error(err)
 		return
 	}
+	_, err = json.Marshal(tmp)
+	if err != nil {
+		t.Error(err)
+	}
 	err = Validate.Struct(tmp)
 	if err != nil {
 		t.Error(err)
@@ -529,14 +546,14 @@ func TestStartTransactionRequest(t *testing.T) {
 }
 
 func StartTransactionResponseSuccess() *StartTransactionResponse {
-
+	TransactionId := 0
 	return &StartTransactionResponse{
 		IdTagInfo: IdTagInfo{
 			ExpiryDate:  time.Now().Format(ISO8601),
 			ParentIdTag: IdToken(RandomString(15)),
 			Status:      authAccepted,
 		},
-		TransactionId: 1,
+		TransactionId: &TransactionId,
 	}
 
 }
@@ -593,12 +610,14 @@ func StopTransactionRequestSuccess() *StopTransactionRequest {
 	}
 
 	meterValue.SampledValue = append(meterValue.SampledValue, sampledValue)
+	MeterStop := 10
+	TransactionId := 10
 
 	return &StopTransactionRequest{
 		IdTag:           IdToken(RandomString(15)),
-		MeterStop:       10,
+		MeterStop:       &MeterStop,
 		Timestamp:       time.Now().Format(time.RFC3339),
-		TransactionId:   10,
+		TransactionId:   &TransactionId,
 		Reason:          EmergencyStop,
 		TransactionData: []MeterValue{meterValue},
 	}
@@ -620,9 +639,10 @@ func StopTransactionRequestFail() *StopTransactionRequest {
 	}
 
 	meterValue.SampledValue = append(meterValue.SampledValue, sampledValue)
+	MeterStop := -1
 	return &StopTransactionRequest{
 		IdTag:     IdToken(RandomString(21)),
-		MeterStop: -1,
+		MeterStop: &MeterStop,
 		//Timestamp: "2021-12-14"
 		//TransactionId:   10,
 		Reason:          Reason(RandomString(10)),
@@ -857,61 +877,78 @@ func TestDataTransferResponse(t *testing.T) {
 /**************RemoteStartTransaction******************/
 
 func RemoteStartTransactionRequestSuccess() *RemoteStartTransactionRequest {
+	ConnectorId := 10
+	ChargingProfiled := 10
+	TransactionId := 10
+	StackLevel := 10
+	Duration := 10
+	StartPeriod := 10
+	var Limit float64 = 10
+	NumberPhases := 10
+	var MinChargingRate float64 = 114.1
+
 	return &RemoteStartTransactionRequest{
-		ConnectorId: 10,
+		ConnectorId: &ConnectorId,
 		IdTag:       IdToken(RandomString(18)),
 		ChargingProfile: &ChargingProfile{
-			ChargingProfiled:       10,
-			TransactionId:          10,
-			StackLevel:             10,
+			ChargingProfiled:       &ChargingProfiled,
+			TransactionId:          &TransactionId,
+			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: chargePointMaxProfile,
 			ChargingProfileKind:    absolute,
 			RecurrencyKind:         daily,
 			ValidFrom:              time.Now().Format(ISO8601),
 			ValidTo:                time.Now().Format(ISO8601),
 			ChargingSchedule: ChargingSchedule{
-				Duration:         10,
+				Duration:         &Duration,
 				StartSchedule:    RandomString(10),
 				ChargingRateUnit: uintTypeA,
 				ChargingSchedulePeriod: []ChargingSchedulePeriod{
 					ChargingSchedulePeriod{
-						StartPeriod:  10,
-						Limit:        10,
-						NumberPhases: 10,
+						StartPeriod:  &StartPeriod,
+						Limit:        &Limit,
+						NumberPhases: &NumberPhases,
 					},
 				},
-				MinChargingRate: 114.1,
+				MinChargingRate: &MinChargingRate,
 			},
 		},
 	}
 }
 
 func RemoteStartTransactionRequestFail() *RemoteStartTransactionRequest {
+	ConnectorId := -1
+	StartPeriod := -1
+	var Limit float64 = -1
+	NumberPhases := -1
+	var MinChargingRate float64 = 114.1
+	StackLevel := -1
+	Duration := -1
 
 	return &RemoteStartTransactionRequest{
-		ConnectorId: -1,
+		ConnectorId: &ConnectorId,
 		IdTag:       IdToken(RandomString(21)),
 		ChargingProfile: &ChargingProfile{
 			// ChargingProfiled:10,
 			//TransactionId:10,
-			StackLevel:             -1,
+			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: ChargingProfilePurposeType(RandomString(10)),
 			ChargingProfileKind:    ChargingProfileKindType(RandomString(10)),
 			RecurrencyKind:         RecurrencyKindType(RandomString(10)),
 			//ValidFrom:RandomString(10),
 			//ValidTo:RandomString(10),
 			ChargingSchedule: ChargingSchedule{
-				Duration: -1,
+				Duration: &Duration,
 				//StartSchedule:RandomString(10),
 				ChargingRateUnit: ChargingRateUnitType(RandomString(10)),
 				ChargingSchedulePeriod: []ChargingSchedulePeriod{
 					ChargingSchedulePeriod{
-						StartPeriod:  -1,
-						Limit:        -1,
-						NumberPhases: -1,
+						StartPeriod:  &StartPeriod,
+						Limit:        &Limit,
+						NumberPhases: &NumberPhases,
 					},
 				},
-				MinChargingRate: 114.1,
+				MinChargingRate: &MinChargingRate,
 			},
 		},
 	}
@@ -979,8 +1016,10 @@ func TestRemoteStartTransactionResponse(t *testing.T) {
 /**************RemoteStopTransaction******************/
 
 func RemoteStopTransactionRequestSuccess() *RemoteStopTransactionRequest {
+	TransactionId := 10
+
 	return &RemoteStopTransactionRequest{
-		TransactionId: 10,
+		TransactionId: &TransactionId,
 	}
 }
 
@@ -1198,59 +1237,76 @@ func TestUnlockConnectorResponse(t *testing.T) {
 
 /**************************SetChargingProfile*******************************/
 func SetChargingProfileSuccess() *SetChargingProfileRequest {
+	ConnectorId := 10
+	ChargingProfiled := 10
+	TransactionId := 10
+	StackLevel := 10
+	StartPeriod := 10
+	var Limit float64 = 10
+	NumberPhases := 10
+	var MinChargingRate float64 = 114.1
+	Duration := 10
+
 	return &SetChargingProfileRequest{
-		ConnectorId: 10,
+		ConnectorId: &ConnectorId,
 		ChargingProfile: ChargingProfile{
-			ChargingProfiled:       10,
-			TransactionId:          10,
-			StackLevel:             10,
+			ChargingProfiled:       &ChargingProfiled,
+			TransactionId:          &TransactionId,
+			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: chargePointMaxProfile,
 			ChargingProfileKind:    absolute,
 			RecurrencyKind:         daily,
 			ValidFrom:              time.Now().Format(ISO8601),
 			ValidTo:                time.Now().Format(ISO8601),
 			ChargingSchedule: ChargingSchedule{
-				Duration:         10,
+				Duration:         &Duration,
 				StartSchedule:    RandomString(10),
 				ChargingRateUnit: uintTypeA,
 				ChargingSchedulePeriod: []ChargingSchedulePeriod{
 					ChargingSchedulePeriod{
-						StartPeriod:  10,
-						Limit:        10,
-						NumberPhases: 10,
+						StartPeriod:  &StartPeriod,
+						Limit:        &Limit,
+						NumberPhases: &NumberPhases,
 					},
 				},
-				MinChargingRate: 114.1,
+				MinChargingRate: &MinChargingRate,
 			},
 		},
 	}
 }
 
 func SetChargingProfileFail() *SetChargingProfileRequest {
+	ConnectorId := -1
+	StackLevel := -1
+	Duration := -1
+	StartPeriod := -1
+	var Limit float64 = -1
+	NumberPhases := -1
+	var MinChargingRate float64 = 114.1
 
 	return &SetChargingProfileRequest{
-		ConnectorId: -1,
+		ConnectorId: &ConnectorId,
 		ChargingProfile: ChargingProfile{
 			// ChargingProfiled:10,
 			//TransactionId:10,
-			StackLevel:             -1,
+			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: ChargingProfilePurposeType(RandomString(10)),
 			ChargingProfileKind:    ChargingProfileKindType(RandomString(10)),
 			RecurrencyKind:         RecurrencyKindType(RandomString(10)),
 			//ValidFrom:RandomString(10),
 			//ValidTo:RandomString(10),
 			ChargingSchedule: ChargingSchedule{
-				Duration: -1,
+				Duration: &Duration,
 				//StartSchedule:RandomString(10),
 				ChargingRateUnit: ChargingRateUnitType(RandomString(10)),
 				ChargingSchedulePeriod: []ChargingSchedulePeriod{
 					ChargingSchedulePeriod{
-						StartPeriod:  -1,
-						Limit:        -1,
-						NumberPhases: -1,
+						StartPeriod:  &StartPeriod,
+						Limit:        &Limit,
+						NumberPhases: &NumberPhases,
 					},
 				},
-				MinChargingRate: 114.1,
+				MinChargingRate: &MinChargingRate,
 			},
 		},
 	}
@@ -1320,9 +1376,10 @@ func TestSetChargingProfileResponse(t *testing.T) {
 /**************************SendLocalList*******************************/
 
 func SetSendLocalListSuccess() *SendLocalListRequest {
+	ListVersion := 0
 
 	return &SendLocalListRequest{
-		ListVersion: 10,
+		ListVersion: &ListVersion,
 		LocalAuthorizationList: []AuthorizationData{
 			AuthorizationData{
 				IdTag: RandomString(10),
@@ -1338,8 +1395,9 @@ func SetSendLocalListSuccess() *SendLocalListRequest {
 }
 
 func SetSendLocalListFail() *SendLocalListRequest {
+	ListVersion := -1
 	return &SendLocalListRequest{
-		ListVersion: -1,
+		ListVersion: &ListVersion,
 		LocalAuthorizationList: []AuthorizationData{
 			AuthorizationData{
 				IdTag: RandomString(10),
@@ -1417,17 +1475,18 @@ func TestSendLocalListResponse(t *testing.T) {
 /**************************SendLocalList*******************************/
 
 func SetGetLocalListVersionResponseSuccess() *GetLocalListVersionResponse {
+	ListVersion := 10
 
 	return &GetLocalListVersionResponse{
-		ListVersion: 10,
+		ListVersion: &ListVersion,
 	}
 
 }
 
 func SetGetLocalListVersionResponseFail() *GetLocalListVersionResponse {
-
+	ListVersion := -1
 	return &GetLocalListVersionResponse{
-		ListVersion: -1,
+		ListVersion: &ListVersion,
 	}
 }
 
@@ -1537,3 +1596,126 @@ func TestGetConfigurationResponse(t *testing.T) {
 	testGetConfigurationResponse(SetGetConfigurationResponseSuccess(), t)
 	// testGetConfigurationResponse(SetGetConfigurationResponseFail(), t) //error
 }
+
+// func TestReserveNowRequest(t *testing.T) {
+// 	ConnectorId := -1
+// 	// ReservationId := 0
+
+// 	a := ReserveNowRequest{
+// 		ConnectorId: &ConnectorId,
+// 		ExpiryDate:  time.Now().Format(time.RFC3339),
+// 		IdTag:       "idtag",
+// 		ParentIdTag: "ParentIdTag",
+// 		// ReservationId: &ReservationId,
+// 	}
+// 	c, _ := json.Marshal(a)
+// 	fmt.Println("###########")
+// 	fmt.Println(string(c))
+// 	var tmp = &ReserveNowRequest{}
+// 	err := json.Unmarshal([]byte("{\"connectorId\":0,\"expiryDate\":\"2022-03-15T15:19:25+08:00\",\"idTag\":\"idtag\",\"parentIdTag\":\"ParentIdTag\"}"), tmp)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	fmt.Printf("%+v\n", tmp)
+// 	err = Validate.Struct(tmp)
+// 	if err != nil {
+// 		t.Error(err,"111")
+// 	}
+// 	callResult := &CallResult{
+// 		MessageTypeID: CALL_RESULT,
+// 		UniqueID:      "1234567",
+// 		Response:      tmp,
+// 	}
+// 	fmt.Printf("%+v\n", callResult)
+// }
+
+// func TestChangeAvailabilityRequest(t *testing.T) {
+// 	ConnectorId := 0
+// 	a := ChangeAvailabilityRequest{
+// 		ConnectorId: &ConnectorId,
+// 		Type:        AvailabilityTypeOperative,
+// 	}
+// 	c, _ := json.Marshal(a)
+// 	fmt.Println("###########")
+// 	fmt.Println(string(c))
+// 	var tmp = &ChangeAvailabilityRequest{}
+// 	err := json.Unmarshal(c, tmp)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	fmt.Printf("%+v\n", tmp)
+// 	err = Validate.Struct(tmp)
+// 	if err != nil {
+// 		t.Error(err, "111")
+// 	}
+// 	callResult := &CallResult{
+// 		MessageTypeID: CALL_RESULT,
+// 		UniqueID:      "1234567",
+// 		Response:      tmp,
+// 	}
+// 	fmt.Printf("%+v\n", callResult)
+// }
+
+func TestGetCompositeScheduleRequest(t *testing.T) {
+	ConnectorId := 1
+	Duration := 1
+	a := GetCompositeScheduleRequest{
+		ConnectorId:      &ConnectorId,
+		Duration:         &Duration,
+		ChargingRateUnit: uintTypeA,
+	}
+	c, _ := json.Marshal(a)
+	fmt.Println("###########")
+	fmt.Println(string(c))
+	var tmp = &GetCompositeScheduleRequest{}
+	err := json.Unmarshal(c, tmp)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Printf("%+v\n", tmp)
+	err = Validate.Struct(tmp)
+	if err != nil {
+		t.Error(err, "111")
+	}
+	callResult := &CallResult{
+		MessageTypeID: CALL_RESULT,
+		UniqueID:      "1234567",
+		Response:      tmp,
+	}
+	fmt.Printf("%+v\n", callResult)
+}
+
+// func TestGetDiagnosticsRequest(t *testing.T) {
+// 	Retries := 1
+// 	RetryInterval := 1
+// 	a := GetDiagnosticsRequest{
+// 		Location:      "{a}",
+// 		Retries:       &Retries,
+// 		RetryInterval: &RetryInterval,
+// 		StartTime:     "bb",
+// 		StopTime:      "cc",
+// 	}
+// 	c, _ := json.Marshal(a)
+// 	fmt.Println("###########")
+// 	fmt.Println(string(c))
+// 	var tmp = &GetDiagnosticsRequest{}
+// 	err := json.Unmarshal(c, tmp)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	fmt.Printf("%+v\n", tmp)
+// 	err = Validate.Struct(tmp)
+// 	if err != nil {
+// 		t.Error(err, "111")
+// 	}
+// 	callResult := &CallResult{
+// 		MessageTypeID: CALL_RESULT,
+// 		UniqueID:      "1234567",
+// 		Response:      tmp,
+// 	}
+// 	fmt.Printf("%+v\n", callResult)
+// }

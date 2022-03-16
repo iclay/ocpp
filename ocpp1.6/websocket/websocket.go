@@ -460,10 +460,6 @@ func (ws *Wsconn) messageHandler(wsmsg []byte) {
 }
 
 func (ws *Wsconn) writedump() {
-	log.Debug("writebegin", ws.id)
-	defer func() {
-		log.Debug("writeend", ws.id)
-	}()
 	for {
 		select {
 		case ping := <-ws.ping:
