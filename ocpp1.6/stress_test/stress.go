@@ -100,6 +100,7 @@ func startOcppPressureTest(p *parameters) {
 	var wg sync.WaitGroup
 	var wgRecv sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	wgRecv.Add(1)
 	go receiveTestResults(ctx, p, ch, &wgRecv)
 	for i := 0; uint64(i) < p.concurrency; i++ {
@@ -134,8 +135,9 @@ func process(ctx context.Context, connid uint64, ch chan<- *requestResults, wg *
 	case <-ctx.Done(): //wait until all connections are established before testing
 		break
 	}
-	timeoutCtx, _ := context.WithTimeout(context.Background(), time.Duration(p.duration)*time.Minute)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Duration(p.duration)*time.Minute)
 	defer func() {
+		cancel()
 		wg.Done()
 		_ = conn.Close()
 	}()
@@ -275,7 +277,7 @@ func receiveTestResults(ctx context.Context, p *parameters, ch <-chan *requestRe
 	stop <- struct{}{}
 	requestTime = uint64(time.Now().UnixNano()) - start
 	resultStatistics(p.concurrency, processingTime, requestTime, maxTime, minTime, successNum, failureNum, runConcurrency, errCodeMap)
-	fmt.Println("\n\n")
+	fmt.Print("\n\n")
 	fmt.Println("*************************  结果统计  ****************************")
 
 	fmt.Println("请求总数:", successNum+failureNum, "总请求时间:",

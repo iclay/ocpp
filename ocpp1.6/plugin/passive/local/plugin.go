@@ -50,9 +50,17 @@ func (l *LocalActionPlugin) StopTransaction(ctx context.Context, id string, uniq
 
 }
 
+func (l *LocalActionPlugin) DataTransfer(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
+	return nil, nil
+
+}
+
 func (l *LocalActionPlugin) ChargingPointOffline(id string) error {
 	return nil
+}
 
+func (l *LocalActionPlugin) ChargingPointOnline(id string) error {
+	return nil
 }
 
 // firmwareManagement - request
@@ -74,6 +82,7 @@ func (l *LocalActionPlugin) registerRequestHandler() {
 		protocol.StartTransactionName:           protocol.RequestHandler(l.StartTransaction),
 		protocol.StopTransactionName:            protocol.RequestHandler(l.StopTransaction),
 		protocol.FirmwareStatusNotificationName: protocol.RequestHandler(l.FirmwareStatusNotification),
+		protocol.DataTransferName:               protocol.RequestHandler(l.DataTransfer),
 	}
 }
 

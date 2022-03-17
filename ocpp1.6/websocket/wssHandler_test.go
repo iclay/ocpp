@@ -195,13 +195,14 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 				switch fields[0].(float64) {
 				case float64(protocol.CALL):
 					go func() {
+						Interval := 10
 						uniqueid := fields[1].(string)
 						callResult := &protocol.CallResult{
 							MessageTypeID: protocol.CALL_RESULT,
 							UniqueID:      uniqueid,
 							Response: &protocol.BootNotificationResponse{
 								CurrentTime: time.Now().Format(time.RFC3339),
-								Interval:    10,
+								Interval:    &Interval,
 								Status:      "Accepted",
 							},
 						}

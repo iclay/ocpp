@@ -53,8 +53,9 @@ var fnBootNotificationRequest = func() protocol.BootNotificationRequest {
 }
 
 var fnStatusNotificationRequest = func() protocol.StatusNotificationRequest {
+	ConnectorId := 10
 	return protocol.StatusNotificationRequest{ //valid request
-		ConnectorId:     10,
+		ConnectorId:     &ConnectorId,
 		ErrorCode:       "ConnectorLockFailure",
 		Info:            RandString(40),
 		Status:          "Available",
@@ -80,9 +81,12 @@ var fnAuthorizeRequest = func() protocol.AuthorizeRequest {
 }
 
 var fnMeterValueRequest = func() protocol.MeterValuesRequest {
+	ConnectorId := 10
+	TransactionId := 22
+
 	var meterValueReq = protocol.MeterValuesRequest{
-		ConnectorId:   10,
-		TransactionId: 22,
+		ConnectorId:   &ConnectorId,
+		TransactionId: &TransactionId,
 	}
 	var meterValue = protocol.MeterValue{
 		Timestamp: time.Now().Format(protocol.ISO8601),
@@ -107,11 +111,13 @@ var fnMeterValueRequest = func() protocol.MeterValuesRequest {
 
 var fnStartTransactionRequest = func() protocol.StartTransactionRequest {
 	meterStart := 10
+	ConnectorId := 10
+	ReservationId := 10
 	return protocol.StartTransactionRequest{
-		ConnectorId:   10,
+		ConnectorId:   &ConnectorId,
 		IdTag:         "qinglianyun",
 		MeterStart:    &meterStart,
-		ReservationId: 10,
+		ReservationId: &ReservationId,
 		Timestamp:     time.Now().Format(protocol.ISO8601),
 	}
 }
@@ -129,11 +135,13 @@ var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
 		Unit:      "Wh",
 	}
 	meterValue.SampledValue = append(meterValue.SampledValue, sampledValue)
+	MeterStop := 50000
+	TransactionId := 22
 	return protocol.StopTransactionRequest{
 		IdTag:           "qinglianyun",
-		MeterStop:       50000,
+		MeterStop:       &MeterStop,
 		Timestamp:       time.Now().Format(protocol.ISO8601),
-		TransactionId:   22,
+		TransactionId:   &TransactionId,
 		Reason:          "EmergencyStop",
 		TransactionData: []protocol.MeterValue{meterValue},
 	}
@@ -357,8 +365,9 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		// time.Sleep(time.Second * 1000)
+		id := i
 		go func() {
-			clientHandler(ctx, t, server.dispatcher, i)
+			clientHandler(ctx, t, server.dispatcher, id)
 		}()
 	}
 	select {

@@ -407,7 +407,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		return
 	}
 	callError := protocol.CallError{
-		MessageTypeID:    protocol.CALL,
+		MessageTypeID:    protocol.CALL_ERROR,
 		UniqueID:         uniqueid,
 		ErrorCode:        protocol.ErrCodeType(errCode),
 		ErrorDescription: errorDescription,

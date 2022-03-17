@@ -115,7 +115,15 @@ func (c *RPCXPlugin) StopTransaction(ctx context.Context, id string, uniqueid st
 	err := c.chargingCore.Call(ctx, "StopTransaction", request.(*protocol.StopTransactionRequest), reply)
 	return reply, err
 }
-
+func (c *RPCXPlugin) DataTransfer(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
+	reply := &protocol.DataTransferResponse{}
+	ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
+		"chargingPointIdentify": id,
+		"messageId":             uniqueid,
+	})
+	err := c.chargingCore.Call(ctx, "DataTransfer", request.(*protocol.DataTransferRequest), reply)
+	return reply, err
+}
 func (c *RPCXPlugin) ChargingPointOffline(id string) error {
 	type OfflineNotice struct {
 		ChargingPointIdentify string `json:"ChargingPointIdentify"`
@@ -167,6 +175,7 @@ func (c *RPCXPlugin) registerRequestHandler() {
 		protocol.StopTransactionName:            protocol.RequestHandler(c.StopTransaction),
 		protocol.FirmwareStatusNotificationName: protocol.RequestHandler(c.FirmwareStatusNotification),
 		protocol.HeartbeatName:                  protocol.RequestHandler(c.Heartbeat),
+		protocol.DataTransferName:               protocol.RequestHandler(c.DataTransfer),
 	}
 }
 
