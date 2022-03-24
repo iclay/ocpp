@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"ocpp16/protocol"
-	"ocpp16/websocket"
+	ocpp16server "ocpp16/server"
 )
 
 var activeCallHandler ActiveCallHandler
 
-func NewActiveCallPlugin(handler websocket.ActiveCallHandler) {
+func NewActiveCallPlugin(handler ocpp16server.ActiveCallHandler) {
 	activeCallHandler = ActiveCallHandler{
 		handler: handler,
 	}
 }
 
 type ActiveCallHandler struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
 func ActiveChangeConfiguration(ctx context.Context, id string, uniqueid string, req *protocol.ChangeConfigurationRequest) error {

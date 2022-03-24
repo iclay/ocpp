@@ -13,7 +13,7 @@ If you want to integrate the custom function plug-in into the communication serv
 - **active**: Under this directory, the user-defined plug-in that the charging system actively sends data to the charging pile needs to be realized. At present, local and rpcx plug-ins are supported. The usage of the user-defined plug-in is described below. See the usage for details of active/README.md  
   ```go
     //This parameter is a closure callback function provided by the charging system. The plug-in only needs to call this callback function to issue a command to the charging pile. Please refer to the implementation method of (active/local/plugin.go)
-    func NewActiveCallPlugin(handler websocket.ActiveCallHandler)
+    func NewActiveCallPlugin(handler ocpp16server.ActiveCallHandler)
   ```
 
 - **passive**: Under this directory, the charging system needs to realize the user-defined function plug-in after receiving the active request of the charging point. At present, local and rpcx plug-ins are supported. See passive/readme for the use of user-defined plug-ins md
@@ -47,8 +47,8 @@ import (
 	active "ocpp16/plugin/active/rpcx"
         //The passive plug-in implemented by rpcx is used in distributed services
 	passive "ocpp16/plugin/passive/rpcx" 
-        //Bottom communication library of websocket
-	"ocpp16/websocket" 
+        //Bottom communication library of server
+	ocpp16server "ocpp16/server" 
 	"os"
 	"time"
 )
@@ -58,24 +58,24 @@ func main() {
 	config.Print()
 	conf := config.GCONF
 	lg := initLogger()
-	websocket.SetLogger(lg)
+	ocpp16server.SetLogger(lg)
         //Start a default charging system service
-	server := websocket.NewDefaultServer() 
+	server := ocpp16server.NewDefaultServer() 
 	defer server.Stop() 
         //Customize the passive plug-in. The rpcx plug-in is currently used
 	actionPlugin := passive.NewActionPlugin() 
         //Integrate the passive plug-in into the charging system, and the charging system will proxy the plug-in to perform the custom functions in the plug-in
 	server.RegisterActionPlugin(actionPlugin)
         //Custom callback function of charging point connected to charging system
-	server.SetConnectHandlers(func(ws *websocket.Wsconn) error { 
+	server.SetConnectHandlers(func(ws *ocpp16server.Wsconn) error { 
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	})
         //Custom callback function for charging point disconnection
-	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error { 
+	server.SetDisconnetHandlers(func(ws *ocpp16server.Wsconn) error { 
 		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
-	}, func(ws *websocket.Wsconn) error {
+	}, func(ws *ocpp16server.Wsconn) error {
 		return actionPlugin.ChargingPointOffline(ws.ID())
 	})
         //The user-defined active plug-in is integrated into the charging system. Currently, the rpcx plug-in is used. The charging  system sends commands to the charging pile on behalf of the plug-in

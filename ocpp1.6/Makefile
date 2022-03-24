@@ -10,7 +10,7 @@ GO_TAGS = -mod vendor
 
 build:
 	export CGO_ENABLE=0
-	go build $(GO_TAGS) -ldflags '-X main.Version=${GIT_TAG_DESC}' ocpp.go 
+	go build $(GO_TAGS) -ldflags '-X main.Version=${GIT_TAG_DESC}' center_system.go 
 
 xz:
 	tar cfJ .xz ocpp

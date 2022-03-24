@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"ocpp16/config"
 	"ocpp16/protocol"
-	"ocpp16/websocket"
+	ocpp16server "ocpp16/server"
 	"time"
 
 	metrics "github.com/rcrowley/go-metrics"
@@ -24,29 +24,29 @@ type ActiveCallServer struct {
 }
 
 type ChargingCoreServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
 type SmartChargingServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
 type LocalAuthListManagementServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 type ReservationServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
 type RemoteTriggerServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
 type FirmwareManagementServer struct {
-	handler websocket.ActiveCallHandler
+	handler ocpp16server.ActiveCallHandler
 }
 
-func NewActiveCallPlugin(handler websocket.ActiveCallHandler) {
+func NewActiveCallPlugin(handler ocpp16server.ActiveCallHandler) {
 	s := &ActiveCallServer{
 		ChargingCore:            &ChargingCoreServer{handler: handler},
 		SmartCharging:           &SmartChargingServer{handler: handler},

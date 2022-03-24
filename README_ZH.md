@@ -13,7 +13,7 @@
 - **active**: 该目录下需要实现充电系统主动下发数据到充电桩桩的自定义插件，当前已经支持本地和rpcx插件,自定义插件使用介绍如下,使用可以详见 active/README.md  
   ```go
     //该参数是充电系统提供的一个闭包回调函数,插件只需调用这个回调函数便可下发命令到充电桩，可以参考(active/local/plugin.go)的实现方式
-    func NewActiveCallPlugin(handler websocket.ActiveCallHandler)
+    func NewActiveCallPlugin(handler ocpp16server.ActiveCallHandler)
   ```
 
 - **passive**: 该目录下需要实现充电系统接收充电桩主动请求后自定义功能插件，当前已经支持本地和rpcx插件,自定义插件使用详见 passive/README.md      
@@ -43,7 +43,7 @@ import (
 	cli "github.com/urfave/cli/v2"
 	active "ocpp16/plugin/active/rpcx" //rpcx实现的active插件，用于在分布式服务中
 	passive "ocpp16/plugin/passive/rpcx" //rpcx实现的passive插件，用于在分布式服务中
-	"ocpp16/websocket"
+	ocpp16server "ocpp16/server"
 	"os"
 	"time"
 )
@@ -53,24 +53,24 @@ func main() {
 	config.Print()
 	conf := config.GCONF
 	lg := initLogger()
-	websocket.SetLogger(lg)
+	ocpp16server.SetLogger(lg)
       //启动一个默认充电系统服务
-	server := websocket.NewDefaultServer() 
+	server := ocpp16server.NewDefaultServer() 
 	defer server.Stop() 
         //自定义passive插件，当前使用的是rpcx插件
 	actionPlugin := passive.NewActionPlugin() 
         //将该passive插件集成到充电系统中，充电系统来代理插件来执行插件内的自定义功能
 	server.RegisterActionPlugin(actionPlugin)
         //充电桩连接到充电系统的自定义回调函数
-	server.SetConnectHandlers(func(ws *websocket.Wsconn) error { 
+	server.SetConnectHandlers(func(ws *ocpp16server.Wsconn) error { 
 		lg.Debugf("id(%s) connect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
 	})
         //充电桩断开连接的自定义回调函数
-	server.SetDisconnetHandlers(func(ws *websocket.Wsconn) error { 
+	server.SetDisconnetHandlers(func(ws *ocpp16server.Wsconn) error { 
 		lg.Debugf("id(%s) disconnect,time(%s)", ws.ID(), time.Now().Format(time.RFC3339))
 		return nil
-	}, func(ws *websocket.Wsconn) error {
+	}, func(ws *ocpp16server.Wsconn) error {
 		return actionPlugin.ChargingPointOffline(ws.ID())
 	})
         //将自定义的active插件集成到充电系统中，当前使用的是rpcx插件,充电系统来代理插件下发命令到充电桩
