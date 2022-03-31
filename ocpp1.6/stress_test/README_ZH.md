@@ -19,7 +19,7 @@ usage of (go build stress.go ***):
 
 - 使用示例:
 ```
-go build stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
+go run stress.go -c 20000 -n 10 -u ws://10.66.0.47:8090 -d 5
 ```
 
 # 测试记录
