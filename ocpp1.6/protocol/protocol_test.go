@@ -1164,15 +1164,16 @@ func TestResetResponse(t *testing.T) {
 /**************UnlockConnector******************/
 
 func UnlockConnectorSuccess() *UnlockConnectorRequest {
+	ConnectorId := 10
 	return &UnlockConnectorRequest{
-		ConnectorId: 10,
+		ConnectorId: &ConnectorId,
 	}
 }
 
 func UnlockConnectorFail() *UnlockConnectorRequest {
-
+	ConnectorId := 0
 	return &UnlockConnectorRequest{
-		ConnectorId: 0,
+		ConnectorId: &ConnectorId,
 	}
 }
 

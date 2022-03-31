@@ -50,8 +50,15 @@ func (c *RPCXPlugin) init() {
 }
 func (c *RPCXPlugin) Heartbeat(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {
 	reply := &protocol.HeartbeatResponse{
-		CurrentTime: time.Now().Format(protocol.ISO8601),
+		CurrentTime: time.Now().UTC().Format(protocol.ISO8601),
 	}
+	go func() {
+		ctx = context.WithValue(ctx, share.ReqMetaDataKey, map[string]string{
+			"chargingPointIdentify": id,
+			"messageId":             uniqueid,
+		})
+		_ = c.chargingCore.Call(ctx, "Heartbeat", request.(*protocol.HeartbeatRequest), &protocol.HeartbeatResponse{})
+	}()
 	return reply, nil
 }
 

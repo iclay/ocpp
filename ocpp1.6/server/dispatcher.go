@@ -167,7 +167,7 @@ func (d *dispatcher) run() {
 		if p := recover(); p != nil {
 			var buf [4096]byte
 			n := runtime.Stack(buf[:], false)
-			log.Errorf("dispatcher exits from panic: %s\n", string(buf[:n]))
+			log.Errorf("dispatcher exits from panic: %s\n", String(buf[:n]))
 		}
 	}()
 	runtime.LockOSThread()

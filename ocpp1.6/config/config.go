@@ -25,6 +25,7 @@ type GConf struct {
 	ETCDList          []string `label:"etcd_list" parse_func:"parse_string_list"`
 	ETCDBasePath      string   `label:"etcd_base_path"`
 	RPCAddress        string   `label:"rpc_addr"`
+	UseConvert        bool     `label:"use_convert" parse_func:"parse_bool"`
 	UsePool           bool     `label:"use_pool" parse_func:"parse_bool"`
 	UseEpoll          bool     `label:"use_epoll" parse_func:"parse_bool"`
 	LogPath           string   `label:"log_path"`

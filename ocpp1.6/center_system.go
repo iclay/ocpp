@@ -84,6 +84,7 @@ func serve(c *cli.Context) error {
 	conf := config.GCONF
 	lg := initLogger()
 	ocpp16server.SetLogger(lg)
+	ocpp16server.WithOptions(ocpp16server.SupportCustomConversion(conf.UseConvert), ocpp16server.SupportObjectPool(conf.UsePool))
 	server := ocpp16server.NewDefaultServer()
 	defer server.Stop()
 	actionPlugin := passive.NewActionPlugin()

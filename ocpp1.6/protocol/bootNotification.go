@@ -41,7 +41,7 @@ func (BootNotificationRequest) Action() string {
 }
 
 type BootNotificationResponse struct {
-	CurrentTime string             `json:"currentTime" validate:"required"`
+	CurrentTime string             `json:"currentTime" validate:"required,dateTime"`
 	Interval    *int               `json:"interval" validate:"required,gte=0"`
 	Status      RegistrationStatus `json:"status" validate:"required,registrationStatus"`
 }

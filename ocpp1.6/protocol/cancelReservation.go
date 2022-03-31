@@ -26,7 +26,7 @@ const (
 )
 
 type CancelReservationRequest struct {
-	ReservationId int `json:"reservationId"`
+	ReservationId *int `json:"reservationId" validate:"required"`
 }
 
 func (CancelReservationRequest) Action() string {

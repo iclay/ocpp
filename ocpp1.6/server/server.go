@@ -32,7 +32,6 @@ type Server struct {
 	wsconns           *wsconns
 	validate          *validator.Validate
 	ocpp16map         *protocol.OCPP16Map
-	ocppTypePools     *ocppTypePools
 	dispatcher        *dispatcher
 	loadBalancer      LoadBalancer
 	once              sync.Once
@@ -127,15 +126,6 @@ func (s *Server) deleteDispatcherQueue(id string) {
 func (s *Server) HandleActiveCall(ctx context.Context, id string, call *protocol.Call) error {
 	return s.dispatcher.appendRequest(ctx, id, call)
 }
-
-func (s *Server) get(t reflect.Type) interface{} {
-	return s.ocppTypePools.get(t)
-}
-
-func (s *Server) put(t reflect.Type, x interface{}) {
-	s.ocppTypePools.put(t, x)
-}
-
 func (s *Server) RegisterActiveCallHandler(handler ActiveCallHandler, fn func(ActiveCallHandler)) {
 	fn(handler)
 }
@@ -168,14 +158,13 @@ func (s *Server) Stop() {
 
 var defaultServer = func(useEpoll bool) *Server {
 	s := &Server{
-		ginServer:     gin.Default(),
-		upgrader:      websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
-		wsconns:       newWsconns(),
-		validate:      protocol.Validate,
-		ocpp16map:     protocol.OCPP16M,
-		ocppTypePools: typePools,
-		wg:            sync.WaitGroup{},
-		actionPlugin:  local.NewActionPlugin(), //default action plugin
+		ginServer:    gin.Default(),
+		upgrader:     websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		wsconns:      newWsconns(),
+		validate:     protocol.Validate,
+		ocpp16map:    protocol.OCPP16M,
+		wg:           sync.WaitGroup{},
+		actionPlugin: local.NewActionPlugin(), //default action plugin
 	}
 	pprof.Register(s.ginServer)
 	s.setDefaultDispatcher(NewDefaultDispatcher(s))
@@ -229,8 +218,8 @@ func (s *Server) initOCPPTypePools(actions []string) {
 	for _, action := range actions {
 		if ocpptrait, ok := s.ocpp16map.GetTraitAction(action); ok {
 			reqTyp, resTyp := ocpptrait.RequestType(), ocpptrait.ResponseType()
-			s.ocppTypePools.init(reqTyp)
-			s.ocppTypePools.init(resTyp)
+			options.object.init(reqTyp)
+			options.object.init(resTyp)
 		}
 	}
 }
@@ -309,7 +298,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 	}
 	ws.setReadDeadTimeout(ws.timeout)
 	ws.conn.SetPingHandler(func(appData string) error {
-		ws.ping <- []byte(appData)
+		ws.ping <- Bytes(appData)
 		return ws.setReadDeadTimeout(ws.timeout)
 	})
 	if conf.UseEpoll {

@@ -18,7 +18,7 @@ func init() {
 }
 
 type UnlockConnectorRequest struct {
-	ConnectorId int `json:"connectorId" validate:"required,gte=0"`
+	ConnectorId *int `json:"connectorId" validate:"required,gte=0"`
 }
 
 func (UnlockConnectorRequest) Action() string {
