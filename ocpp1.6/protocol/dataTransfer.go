@@ -17,7 +17,7 @@ func init() {
 }
 
 type DataTransferRequest struct {
-	VendorId  string `json:"vendorid"  validate:"required,max=255"`
+	VendorId  string `json:"vendorId"  validate:"required,max=255"`
 	MessageId string `json:"messageId,omitempty" validate:"omitempty,max=50"`
 	Data      string `json:"data,omitempty" validate:"omitempty"`
 }
