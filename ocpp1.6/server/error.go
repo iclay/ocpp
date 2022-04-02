@@ -21,7 +21,7 @@ func occurenceConstraintViolation(fieldError validator.FieldError, action string
 	return &Error{
 		ErrorCode:        protocol.OccurenceConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v must required but it seems to have been omitted", action, fieldError.Namespace()),
-		ErrorDetails:     nil,
+		ErrorDetails:     "",
 	}
 }
 
@@ -29,21 +29,21 @@ func genericError(fieldErrors validator.ValidationErrors, action string) *Error 
 	return &Error{
 		ErrorCode:        protocol.GenericError,
 		ErrorDescription: fmt.Sprintf("action:%v,error:%v", action, fieldErrors.Error()),
-		ErrorDetails:     nil,
+		ErrorDetails:     "",
 	}
 }
 func propertyConstraintViolationLen(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
 		ErrorCode:        protocol.PropertyConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v len must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
-		ErrorDetails:     nil,
+		ErrorDetails:     "",
 	}
 }
 func propertyConstraintViolationCmp(fieldError validator.FieldError, condition string, action string) *Error {
 	return &Error{
 		ErrorCode:        protocol.PropertyConstraintViolation,
 		ErrorDescription: fmt.Sprintf("action:%v, field %v must %v %v, but the value passed is %v", action, fieldError.Namespace(), condition, fieldError.Param(), fieldError.Value()),
-		ErrorDetails:     nil,
+		ErrorDetails:     "",
 	}
 }
 func escape(s string) string {
@@ -76,6 +76,6 @@ func checkValidatorError(err error, action string) *Error {
 	return &Error{
 		ErrorCode:        protocol.CallInternalError,
 		ErrorDescription: err.Error(),
-		ErrorDetails:     nil,
+		ErrorDetails:     "",
 	}
 }

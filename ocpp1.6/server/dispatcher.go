@@ -223,7 +223,7 @@ func (d *dispatcher) run() {
 						UniqueID:         ctx.uniqueid,
 						ErrorCode:        protocol.CallInternalError,
 						ErrorDescription: fmt.Sprintf("center auto response due to device response timeout,uniqueid(%s)", ctx.uniqueid),
-						ErrorDetails:     nil,
+						ErrorDetails:     "",
 					})
 				}
 			}
