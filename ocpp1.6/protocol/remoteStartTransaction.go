@@ -55,7 +55,7 @@ const (
 )
 
 type ChargingProfile struct {
-	ChargingProfiled       *int                       `json:"chargingProfileId" validate:"required"`
+	ChargingProfileId      *int                       `json:"chargingProfileId" validate:"required"`
 	TransactionId          *int                       `json:"transactionId,omitempty" validate:"omitempty"`
 	StackLevel             *int                       `json:"stackLevel" validate:"required,gte=0"`
 	ChargingProfilePurpose ChargingProfilePurposeType `json:"chargingProfilePurpose" validate:"required,chargingProfilePurpose"`

@@ -2,7 +2,7 @@ package protocol
 
 type ConfigurationKey struct {
 	Key      string `json:"key" validate:"required,max=50"`
-	Readonly bool   `json:"readonly" validate:"required"`
+	Readonly *bool  `json:"readonly" validate:"required"`
 	Value    string `json:"value,omitempty" validate:"omitempty,max=500"`
 }
 

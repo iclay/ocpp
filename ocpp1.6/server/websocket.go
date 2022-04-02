@@ -111,7 +111,7 @@ func (ws *Wsconn) responseHandler(uniqueid string, action string, res protocol.R
 	if handler, ok := ws.server.actionPlugin.ResponseHandler(action); ok {
 		log.Debugf("client response, id(%s), uniqueid(%s),action(%s), response(%+v)", ws.id, uniqueid, action, res)
 		if err := handler(context.Background(), ws.id, uniqueid, res); err != nil {
-			log.Errorf("response handler failed, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
+			log.Errorf("client response handler failed, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
 		}
 		return
 	}
@@ -123,7 +123,7 @@ func (ws *Wsconn) requestHandler(uniqueid string, action string, req protocol.Re
 		log.Debugf("client request, id(%s), uniqueid(%s),action(%s), request(%+v)", ws.id, uniqueid, action, req)
 		res, err := handler(context.Background(), ws.id, uniqueid, req)
 		if err != nil {
-			log.Errorf("request handler failed, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
+			log.Errorf("client request handler failed, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
 		callResult := &protocol.CallResult{
@@ -180,7 +180,8 @@ func (ws *Wsconn) sendCallError(uniqueID string, e *Error) error {
 		UniqueID:         uniqueID,
 		ErrorCode:        e.ErrorCode,
 		ErrorDescription: e.ErrorDescription,
-		ErrorDetails:     nil,
+		// ErrorDetails:     nil,
+		ErrorDetails: "",
 	}
 	if err := ws.server.validate.Struct(callError); err != nil {
 		return err
@@ -400,7 +401,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		log.Errorf("action is nil, may be client response timeout or center never request,id(%s),wsmsg(%s),wsmsg_type(%s)", ws.id, String(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
-			ErrorDescription: fmt.Sprintf("may be client response timeout or center never request,uniqueid(%s)", uniqueid),
+			ErrorDescription: fmt.Sprintf("may be you client response timeout or center never request,uniqueid(%s)", uniqueid),
 			ErrorDetails:     nil}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallError)
 		}

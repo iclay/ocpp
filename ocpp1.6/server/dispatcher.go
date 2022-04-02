@@ -298,7 +298,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 						id:       id,
 						uniqueid: uniqueid,
 					}
-					log.Debugf("response timeout,id(%s), uniqueid(%s), request(%+v)", id, uniqueid, request)
+					log.Debugf("client response timeout,id(%s), uniqueid(%s), request(%+v)", id, uniqueid, request)
 				default:
 					if _, ok := d.server.getConn(id); !ok {
 						log.Debugf("timeoutC has cancel due to connection close, id(%s), uniqueid(%s), request(%+v)", id, uniqueid, request)
