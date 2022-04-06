@@ -1,0 +1,63 @@
+ 驱动器 E 中的卷是 Software
+ 卷的序列号是 DD13-A4EC
+
+ E:\RD6\02.充电桩\00.自制充电桩\OCPP\OCPP_1.6_documentation_2019_12\OCPP_1.6_documentation_2019_12\schemas\OCPP-1.6_JSON_schemas(56pcs) 的目录
+
+2019/12/04  22:21               373 Authorize.json
+2019/12/04  22:28             1,154 AuthorizeResponse.json
+2019/12/04  22:28             1,246 BootNotification.json
+2019/12/04  22:28               744 BootNotificationResponse.json
+2019/12/04  22:28               376 CancelReservation.json
+2019/12/04  22:28               503 CancelReservationResponse.json
+2019/12/04  22:28               596 ChangeAvailability.json
+2019/12/04  22:28               535 ChangeAvailabilityResponse.json
+2019/12/04  22:28               500 ChangeConfiguration.json
+2019/12/04  22:28               575 ChangeConfigurationResponse.json
+2019/12/04  22:28               234 ClearCache.json
+2019/12/04  22:28               489 ClearCacheResponse.json
+2019/12/04  22:28               726 ClearChargingProfile.json
+2019/12/04  22:28               508 ClearChargingProfileResponse.json
+2019/12/04  22:28               543 DataTransfer.json
+2019/12/04  22:28               627 DataTransferResponse.json
+2019/12/04  22:28               584 DiagnosticsStatusNotification.json
+2019/12/04  22:28               274 DiagnosticsStatusNotificationResponse.json
+2019/12/04  22:28               684 FirmwareStatusNotification.json
+2019/12/04  22:28               268 FirmwareStatusNotificationResponse.json
+2019/12/04  22:28               628 GetCompositeSchedule.json
+2019/12/04  22:28             2,281 GetCompositeScheduleResponse.json
+2019/12/04  22:28               418 GetConfiguration.json
+2019/12/04  22:28             1,165 GetConfigurationResponse.json
+2019/12/04  22:28               728 GetDiagnostics.json
+2019/12/04  22:28               345 GetDiagnosticsResponse.json
+2019/12/04  22:28               252 GetLocalListVersion.json
+2019/12/04  22:28               378 GetLocalListVersionResponse.json
+2019/12/04  22:28               232 Heartbeat.json
+2019/12/04  22:28               393 HeartbeatResponse.json
+2019/12/04  22:28             6,847 MeterValues.json
+2019/12/04  22:28               238 MeterValuesResponse.json
+2019/12/04  22:28             4,574 RemoteStartTransaction.json
+2019/12/04  22:28               513 RemoteStartTransactionResponse.json
+2019/12/04  22:28               384 RemoteStopTransaction.json
+2019/12/04  22:28               511 RemoteStopTransactionResponse.json
+2019/12/04  22:28               789 ReserveNow.json
+2019/12/04  22:28               578 ReserveNowResponse.json
+2019/12/04  22:28               465 Reset.json
+2019/12/04  22:28               479 ResetResponse.json
+2019/12/04  22:28             2,269 SendLocalList.json
+2019/12/04  22:28               562 SendLocalListResponse.json
+2019/12/04  22:28             4,494 SetChargingProfile.json
+2019/12/04  22:28               538 SetChargingProfileResponse.json
+2019/12/04  22:28               766 StartTransaction.json
+2019/12/04  22:28             1,265 StartTransactionResponse.json
+2019/12/04  22:28             1,935 StatusNotification.json
+2019/12/04  22:28               252 StatusNotificationResponse.json
+2019/12/04  22:28             7,495 StopTransaction.json
+2019/12/04  22:28             1,118 StopTransactionResponse.json
+2019/12/04  22:28               761 TriggerMessage.json
+2019/12/04  22:28               532 TriggerMessageResponse.json
+2019/12/04  22:28               368 UnlockConnector.json
+2019/12/04  22:28               536 UnlockConnectorResponse.json
+2019/12/04  22:28               655 UpdateFirmware.json
+2019/12/04  22:28               244 UpdateFirmwareResponse.json
+              56 个文件         57,527 字节
+               0 个目录 80,174,338,048 可用字节
