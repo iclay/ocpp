@@ -1,0 +1,29 @@
+#You can customize your configuration file, but the configuration item must be consistent with the tag in the GConf structure, otherwise it cannot be parsed
+
+service_addr 0.0.0.0
+service_uri /ocpp/:name/:id
+
+ws_enable on
+ws_port 8090
+
+wss_enable off
+wss_port 8091
+tls_cert certpath
+tls_key keypath
+
+heartbeat_timeout 30
+
+etcd_list 127.0.0.1:2379
+etcd_base_path /ocpp
+rpc_addr 10.66.0.50:9990
+#Whether to support custom conversion, such as the mutual conversion of string and bytes. If yes, it will help to improve performance
+use_convert on
+#Whether object pooling is supported, if so, will help improve performance
+use_pool on
+#Whether to epoll
+use_epoll off
+
+log_path /ocpp/log
+log_level debug
+log_max_disk_usage 5G
+log_max_file_num 10
