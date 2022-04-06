@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"ocpp16/config"
 	"ocpp16/logwriter"
+
 	// active "ocpp16/plugin/active/local"
 	// passive "ocpp16/plugin/passive/local"
-	log "github.com/sirupsen/logrus"
-	cli "github.com/urfave/cli/v2"
 	active "ocpp16/plugin/active/rpcx"
 	passive "ocpp16/plugin/passive/rpcx"
 	ocpp16server "ocpp16/server"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	cli "github.com/urfave/cli/v2"
 )
 
 var Version = "manual build has no version"

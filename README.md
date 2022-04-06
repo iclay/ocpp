@@ -1,6 +1,8 @@
 # brief introduction
 
-The implemented open charging protocol is based on the underlying information framework of websocket. The communication protocol supports WS and WSS, and supports the business side to integrate into the whole communication system service in the form of custom plug-ins. The protocol implements two optional versions based on go native goroutine and reactor + epoll. At present, it only supports all functions of ocpp1.6  
+Open charge point protocol (ocpp) is a global open communication standard. It is a network protocol used for communication between electric vehicle charger and central background system. It is mainly used to solve various difficulties caused by communication between private charging networks. Ocpp has been applied to multiple charging facilities in 49 countries, so it has essentially become the industry standard for charging facilities and network communication, Ocpp supports seamless communication management between the charging station and the central management system of each supplier. The communication protocol supports WS and WSS, and supports the business end to integrate into the whole communication system service in the form of user-defined plug-ins. The protocol realizes two optional versions based on go native goroutine and reactor + epoll, At present, it only supports all functions of ocpp1.6   
+
+Please note that this is a library rather than an application. You can refer to the center_ system. Go to implement your own main method
 
 Current support:
 
