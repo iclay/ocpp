@@ -24,6 +24,8 @@ type Wsconn struct {
 	sync.Mutex
 }
 
+type ErrorDetails struct{}
+
 type wsconns struct {
 	wsmap   map[string]*Wsconn
 	wsfdmap map[int]*Wsconn
@@ -213,7 +215,7 @@ func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.FormationViolation,
 			ErrorDescription: fmt.Sprintf("invalid num of call fields(%+v),exptect 4 fields,uniqueid(%s)", fields, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v), id(%s), wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), Call)
 		}
 		return
@@ -224,7 +226,7 @@ func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid call action(%s) type,must be string,uniqueid(%s)", fields[2], uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), Call)
 		}
 		return
@@ -235,7 +237,7 @@ func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.NotSupported,
 			ErrorDescription: fmt.Sprintf("action(%s) not support current,uniqueid(%s)", action, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), Call)
 		}
 		return
@@ -247,7 +249,7 @@ func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		if err = ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%s)", err, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), Call)
 		}
 		return
@@ -259,7 +261,7 @@ func (ws *Wsconn) callHandler(uniqueid string, wsmsg []byte, fields []interface{
 		if err = ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%s)", err, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), Call)
 		}
 		return
@@ -285,7 +287,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.FormationViolation,
 			ErrorDescription: fmt.Sprintf("invalid num of callresult fields(%+v),exptect 3 fields,uniqueid(%s)", fields, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallResult)
 		}
 		return
@@ -301,7 +303,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("may be client response timeout or center never request,uniqueid(%s)", uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallResult)
 		}
 		return
@@ -312,7 +314,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.NotSupported,
 			ErrorDescription: fmt.Sprintf("action(%s) not support current,uniqueid(%s)", action, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallResult)
 		}
 		return
@@ -324,7 +326,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		if err = ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%s)", err, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallResult)
 		}
 		return
@@ -336,7 +338,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		if err = ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("json Marshal error(%v),uniqueid(%s)", err, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallResult)
 		}
 		return
@@ -363,7 +365,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.FormationViolation,
 			ErrorDescription: fmt.Sprintf("invalid num of callresult fields(%+v),exptect 5 fields,uniqueid(%s)", fields, uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallError)
 		}
 		return
@@ -374,7 +376,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid CallError errCode(%v) type,must be string,uniqueid(%s)", fields[2], uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallError)
 		}
 		return
@@ -385,7 +387,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.TypeConstraintViolation,
 			ErrorDescription: fmt.Sprintf("invalid CallError errorDescription(%v) type,must be string,uniqieid(%s)", fields[2], uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallError)
 		}
 		return
@@ -401,7 +403,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
 			ErrorDescription: fmt.Sprintf("may be you client response timeout or center never request,uniqueid(%s)", uniqueid),
-			ErrorDetails:     ""}); err != nil {
+			ErrorDetails:     ErrorDetails{}}); err != nil {
 			log.Errorf("send CallError error(%v),id(%s),wsmsg(%s),wsmsg_type(%s)", err, ws.id, String(wsmsg), CallError)
 		}
 		return
