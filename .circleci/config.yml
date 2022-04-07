@@ -19,14 +19,8 @@ jobs:
           key: go-mod-v4-{{ checksum "ocpp1.6/go.sum" }}
           paths:
             - "/go/pkg/mod"
-      # - run: cd ocpp1.6/websocket && go vet
-      - run: cd ocpp1.6/websocket && go test -timeout=5m > $TEST_RESULTS/test
-      - run:
-          name: run unit tests
-          command: |
-            cd ocpp1.6
-            PACKAGE_NAMES=$(go list ./... | circleci tests split --split-by=timings --timings-type=classname)
-            gotestsum --junitfile ${TEST_RESULTS}/gotestsum-report.xml -- $PACKAGE_NAMES
+      - run: cd ocpp1.6/websocket && go vet
+      - run: cd ocpp1.6/websocket && go test -timeout=30m > $TEST_RESULTS/test
       - store_artifacts: 
           path: /tmp/test-results
           destination: raw-test-output
@@ -37,4 +31,3 @@ workflows:
   build-workflow:
     jobs:
       - build
-
