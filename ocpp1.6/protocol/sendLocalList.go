@@ -42,7 +42,7 @@ type UpdateStatus string
 
 type AuthorizationData struct {
 	IdTag     string    `json:"idTag" validate:"required,max=20"`
-	IdTagInfo IdTagInfo `json:"idTagInfo,omitempty"` //TODO: validate required if update type is Full
+	IdTagInfo IdTagInfo `json:"idTagInfo,omitempty" validate:"omitempty"` //TODO: validate required if update type is Full
 }
 
 type SendLocalListRequest struct {

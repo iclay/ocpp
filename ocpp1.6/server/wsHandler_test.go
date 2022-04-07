@@ -9,6 +9,7 @@ import (
 	"net/url"
 	local "ocpp16/plugin/passive/local"
 	"ocpp16/protocol"
+
 	// registry "ocpp16/registry/rpcx"
 	"github.com/gorilla/websocket"
 	//"github.com/sirupsen/logrus"
@@ -41,8 +42,8 @@ func RandString(len int) string {
 var fnBootNotificationRequest = func() protocol.BootNotificationRequest {
 	return protocol.BootNotificationRequest{
 		ChargePointVendor:       "qinglianyun",
-		ChargePointModel:        "sujunkang",
-		ChargePointSerialNumber: RandString(15),
+		ChargePointModel:        "model_one",
+		ChargePointSerialNumber: "qinglianyun1",
 		ChargeBoxSerialNumber:   RandString(15),
 		FirmwareVersion:         RandString(15),
 		Iccid:                   RandString(15),
@@ -76,13 +77,13 @@ var fnStatusNotificationRequest = func() protocol.StatusNotificationRequest {
 
 var fnAuthorizeRequest = func() protocol.AuthorizeRequest {
 	return protocol.AuthorizeRequest{
-		IdTag: "qinglianyun",
+		IdTag: "sujunkang_test_2",
 	}
 }
 
 var fnMeterValueRequest = func() protocol.MeterValuesRequest {
-	ConnectorId := 10
-	TransactionId := 22
+	ConnectorId := 1
+	TransactionId := 344584108
 
 	var meterValueReq = protocol.MeterValuesRequest{
 		ConnectorId:   &ConnectorId,
@@ -111,14 +112,14 @@ var fnMeterValueRequest = func() protocol.MeterValuesRequest {
 
 var fnStartTransactionRequest = func() protocol.StartTransactionRequest {
 	meterStart := 10
-	ConnectorId := 10
-	ReservationId := 10
+	ConnectorId := 1
+	// ReservationId := 10
 	return protocol.StartTransactionRequest{
-		ConnectorId:   &ConnectorId,
-		IdTag:         "qinglianyun",
-		MeterStart:    &meterStart,
-		ReservationId: &ReservationId,
-		Timestamp:     time.Now().Format(protocol.ISO8601),
+		ConnectorId: &ConnectorId,
+		IdTag:       "sujunkang_test_2",
+		MeterStart:  &meterStart,
+		// ReservationId: &ReservationId,
+		Timestamp: time.Now().Format(protocol.ISO8601),
 	}
 }
 var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
@@ -138,7 +139,7 @@ var fnStopTransactionRequest = func() protocol.StopTransactionRequest {
 	MeterStop := 50000
 	TransactionId := 22
 	return protocol.StopTransactionRequest{
-		IdTag:           "qinglianyun",
+		IdTag:           "sujunkang_test_2",
 		MeterStop:       &MeterStop,
 		Timestamp:       time.Now().Format(protocol.ISO8601),
 		TransactionId:   &TransactionId,
@@ -164,11 +165,8 @@ var fnResetResponse = func() *protocol.ResetResponse {
 func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	flag.Parse()
 	name, id := RandString(5), RandString(5)
-	// name, id := "qinglianyun", fmt.Sprintf("sujunkang%d", i)
-	// name, id := "qinglianyun", "sujunkang"
 	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
-	u := url.URL{Scheme: "ws", Host: "182.92.132.15:8090", Path: path}
-	// u := url.URL{Scheme: "ws", Host: "localhost:8000", Path: path}
+	u := url.URL{Scheme: "ws", Host: "localhost:8000", Path: path}
 	dialer := websocket.Dialer{
 		Proxy:            http.ProxyFromEnvironment,
 		HandshakeTimeout: 45 * time.Second,
@@ -180,13 +178,13 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 	}
 	t.Log("path", path)
 	defer c.Close()
-	// ch := make(chan string, 10)
-	// var closed bool
-	// defer func() {
-	// 	closed = true
-	// 	//close(ch)
-	// }()
-	// queue := NewQueue()
+	ch := make(chan string, 10)
+	var closed bool
+	defer func() {
+		closed = true
+		//close(ch)
+	}()
+	queue := NewRequestQueue()
 	var waitgroup sync.WaitGroup
 	var mtx sync.Mutex
 	go func() {
@@ -199,48 +197,47 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 			}
 		}
 	}()
-	// waitgroup.Add(1)
-	// go func() { //test for center request
-	// 	defer waitgroup.Done()
+	waitgroup.Add(1)
+	go func() { //test for center request
+		defer waitgroup.Done()
 
-	// 	for {
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			return
-	// 		default:
-	// 			call := &protocol.Call{
-	// 				MessageTypeID: protocol.CALL,
-	// 				UniqueID:      RandString(7),
-	// 				Action:        "Reset",
-	// 				// Request:       fnBootNotificationRequest(),
-	// 				Request:       fnResetRequest(),
-	// 			}
-	// 			queue.Push(call.UniqueID)
-	// 			if err := d.appendRequest(context.Background(), fmt.Sprintf("%s-%s", name, id), call); err != nil {
-	// 				return
-	// 			}
-	// 			time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
-	// 			time.Sleep(time.Second * 10000)
-	// 		}
-	// 	}
-	// }()
-	// waitgroup.Add(1)
-	// go func() {
-	// 	defer waitgroup.Done()
-	// 	for {
-	// 		select {
-	// 		case <-ctx.Done():
-	// 			return
-	// 		case res_uniqueid := <-ch:
-	// 			rep_uniqueid, _ := queue.Pop()
-	// 			next_uniqueid, _ := queue.Peek()
-	// 			t.Logf("ws_id(%s), res_uniqueid(%s),rep_uniqueid(%s),queue remain(%d), next_uniqueid(%v)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
-	// 			if res_uniqueid != rep_uniqueid {
-	// 				t.Errorf("ws_id(%s), res_uniqueid(%s) != rep_uniqueid(%s)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid)
-	// 			}
-	// 		}
-	// 	}
-	// }()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				call := &protocol.Call{
+					MessageTypeID: protocol.CALL,
+					UniqueID:      RandString(7),
+					Action:        "Reset",
+					Request:       fnBootNotificationRequest(),
+				}
+				queue.Push(call.UniqueID)
+				if err := d.appendRequest(context.Background(), fmt.Sprintf("%s-%s", name, id), call); err != nil {
+					return
+				}
+				time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 5)
+				time.Sleep(time.Second * 10000)
+			}
+		}
+	}()
+	waitgroup.Add(1)
+	go func() {
+		defer waitgroup.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case res_uniqueid := <-ch:
+				rep_uniqueid, _ := queue.Pop()
+				next_uniqueid, _ := queue.Peek()
+				t.Logf("ws_id(%s), res_uniqueid(%s),rep_uniqueid(%s),queue remain(%d), next_uniqueid(%v)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid, queue.Len(), next_uniqueid)
+				if res_uniqueid != rep_uniqueid {
+					t.Errorf("ws_id(%s), res_uniqueid(%s) != rep_uniqueid(%s)", fmt.Sprintf("%s-%s", name, id), res_uniqueid, rep_uniqueid)
+				}
+			}
+		}
+	}()
 	waitgroup.Add(1)
 	go func() {
 		defer waitgroup.Done()
@@ -262,33 +259,33 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 				switch fields[0].(float64) {
 				case float64(protocol.CALL):
 					go func() {
+						Interval := 10
 						uniqueid := fields[1].(string)
 						callResult := &protocol.CallResult{
 							MessageTypeID: protocol.CALL_RESULT,
 							UniqueID:      uniqueid,
-							// Response: &protocol.BootNotificationResponse{
-							// 	CurrentTime: time.Now().Format(time.RFC3339),
-							// 	Interval:    10,
-							// 	Status:      "Accepted",
-							// },
-							Response: fnResetResponse(),
+							Response: &protocol.BootNotificationResponse{
+								CurrentTime: time.Now().Format(time.RFC3339),
+								Interval:    &Interval,
+								Status:      "Accepted",
+							},
 						}
 						callResultMsg, err := json.Marshal(callResult)
 						if err != nil {
 							return
 						}
-						// time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
+						time.Sleep(time.Second * time.Duration(randn.Intn(3)) / 10)
 						t.Logf("test for center call: id(%v),recv msg(%+v), resp_msg(%+v)", fmt.Sprintf("%s-%s", name, id), string(message), string(callResultMsg))
-						// mtx.Lock()
-						// err = c.WriteMessage(websocket.TextMessage, callResultMsg)
-						// mtx.Unlock()
-						// if err != nil {
-						// 	t.Error(err)
-						// 	return
-						// }
-						// if !closed {
-						// 	ch <- callResult.UniqueID
-						// }
+						mtx.Lock()
+						err = c.WriteMessage(websocket.TextMessage, callResultMsg)
+						mtx.Unlock()
+						if err != nil {
+							t.Error(err)
+							return
+						}
+						if !closed {
+							ch <- callResult.UniqueID
+						}
 					}()
 				case float64(protocol.CALL_RESULT), float64(protocol.CALL_ERROR):
 					t.Logf("test for client call:recv id(%v), recv msg(%s)", fmt.Sprintf("%s-%s", name, id), string(message))
@@ -344,7 +341,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 					return
 				}
 				t.Logf("test for client call:send id(%v), send msg(%s)", fmt.Sprintf("%s-%s", name, id), string(callMsg))
-				time.Sleep(time.Second / 10)
+				time.Sleep(time.Second * 10)
 			}
 		}
 	}()
@@ -353,7 +350,7 @@ func clientHandler(ctx context.Context, t *testing.T, d *dispatcher, i int) {
 }
 
 func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*66000)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*10)
 	lg := initLogger()
 	SetLogger(lg)
 	server := NewDefaultServer()
@@ -364,7 +361,6 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	}()
 	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
-		// time.Sleep(time.Second * 1000)
 		id := i
 		go func() {
 			clientHandler(ctx, t, server.dispatcher, id)
@@ -372,7 +368,7 @@ func WsHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	}
 	select {
 	case <-ctx.Done():
-		time.Sleep(time.Second * 50)
+		time.Sleep(time.Second * 20)
 		cancel()
 	}
 	waitGroup.Done()

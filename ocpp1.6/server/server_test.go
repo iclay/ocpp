@@ -1,12 +1,13 @@
 package server
 
 import (
-	"github.com/sirupsen/logrus"
 	"ocpp16/config"
 	"ocpp16/logwriter"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func initLogger() *logrus.Logger {

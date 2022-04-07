@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+
 	// "reflect"
 	"testing"
 	"time"
@@ -878,7 +879,7 @@ func TestDataTransferResponse(t *testing.T) {
 
 func RemoteStartTransactionRequestSuccess() *RemoteStartTransactionRequest {
 	ConnectorId := 10
-	ChargingProfiled := 10
+	ChargingProfileId := 10
 	TransactionId := 10
 	StackLevel := 10
 	Duration := 10
@@ -891,7 +892,7 @@ func RemoteStartTransactionRequestSuccess() *RemoteStartTransactionRequest {
 		ConnectorId: &ConnectorId,
 		IdTag:       IdToken(RandomString(18)),
 		ChargingProfile: &ChargingProfile{
-			ChargingProfiled:       &ChargingProfiled,
+			ChargingProfileId:      &ChargingProfileId,
 			TransactionId:          &TransactionId,
 			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: chargePointMaxProfile,
@@ -1239,7 +1240,7 @@ func TestUnlockConnectorResponse(t *testing.T) {
 /**************************SetChargingProfile*******************************/
 func SetChargingProfileSuccess() *SetChargingProfileRequest {
 	ConnectorId := 10
-	ChargingProfiled := 10
+	ChargingProfileId := 10
 	TransactionId := 10
 	StackLevel := 10
 	StartPeriod := 10
@@ -1251,7 +1252,7 @@ func SetChargingProfileSuccess() *SetChargingProfileRequest {
 	return &SetChargingProfileRequest{
 		ConnectorId: &ConnectorId,
 		ChargingProfile: ChargingProfile{
-			ChargingProfiled:       &ChargingProfiled,
+			ChargingProfileId:      &ChargingProfileId,
 			TransactionId:          &TransactionId,
 			StackLevel:             &StackLevel,
 			ChargingProfilePurpose: chargePointMaxProfile,
@@ -1551,11 +1552,12 @@ func TestGetConfigurationRequest(t *testing.T) {
 }
 
 func SetGetConfigurationResponseSuccess() *GetConfigurationResponse {
+	Readonly := true
 	return &GetConfigurationResponse{
 		ConfigurationKey: []ConfigurationKey{
 			ConfigurationKey{
 				Key:      RandomString(30),
-				Readonly: true,
+				Readonly: &Readonly,
 				Value:    RandomString(30),
 			},
 		},
@@ -1564,11 +1566,12 @@ func SetGetConfigurationResponseSuccess() *GetConfigurationResponse {
 }
 
 func SetGetConfigurationResponseFail() *GetConfigurationResponse {
+	Readonly := true
 	return &GetConfigurationResponse{
 		ConfigurationKey: []ConfigurationKey{
 			ConfigurationKey{
 				Key:      RandomString(70),
-				Readonly: true,
+				Readonly: &Readonly,
 				Value:    RandomString(550),
 			},
 		},

@@ -12,8 +12,6 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"math/big"
 	randn "math/rand"
@@ -25,6 +23,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/require"
 )
 
 var wss_addr = flag.String("wss_addr", "localhost:8091", "websocket tls service address")
@@ -93,7 +94,6 @@ func createTLSCertificate(certificateFilename string, keyFilename string, cn str
 func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCertName string, clientCertName string, clientKeyName string) {
 	flag.Parse()
 	name, id := RandString(5), RandString(5)
-	// name, id := "qinglianyun", "sujunkang"
 	path := fmt.Sprintf("/ocpp/%s/%s", name, id)
 	u := url.URL{Scheme: "wss", Host: "localhost:8091", Path: path}
 	certPool := x509.NewCertPool()
@@ -275,7 +275,7 @@ func TLSClientHandler(ctx context.Context, t *testing.T, d *dispatcher, serverCe
 					t.Error(err)
 					return
 				}
-				time.Sleep(time.Second * 100)
+				time.Sleep(time.Second * 10)
 			}
 		}
 	}()
@@ -305,7 +305,7 @@ func WssHandler(t *testing.T, waitGroup *sync.WaitGroup) {
 	go func() {
 		server.ServeTLS(*wss_addr, "/ocpp/:name/:id", serverCertName, serverKeyName)
 	}()
-	for i := 0; i < 2; i++ { //numbers of client
+	for i := 0; i < 100; i++ { //numbers of client
 		time.Sleep(time.Second / 10)
 		go func() {
 			TLSClientHandler(ctx, t, server.dispatcher, serverCertName, clientCertName, clientKeyName)
