@@ -14,9 +14,9 @@ jobs:
       - run: go env 
       - restore_cache: 
           keys:
-            - go-mod-{{ checksum "ocpp1.6/go.sum" }}
+            - go-mod-v1{{ checksum "ocpp1.6/go.sum" }}
       - save_cache:
-          key: go-mod-{{ checksum "ocpp1.6/go.sum" }}
+          key: go-mod-v1{{ checksum "ocpp1.6/go.sum" }}
           paths:
             - "/go/pkg/mod"
       # - run: cd ocpp1.6/websocket && go vet
