@@ -6,8 +6,8 @@ type option struct {
 }
 
 var options = &option{
-	convert: rawConvert{},
-	object:  ocppType{},
+	convert: &rawConvert{},
+	object:  &ocppType{},
 }
 
 type opt func(*option)

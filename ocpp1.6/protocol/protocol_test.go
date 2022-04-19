@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-
 	// "reflect"
 	"testing"
 	"time"
@@ -330,7 +329,7 @@ func MeterValueRequestSuccess() *MeterValuesRequest {
 		TransactionId: &TransactionId,
 	}
 	var meterValue = MeterValue{
-		Timestamp: time.Now().Format(time.RFC3339),
+		TimeStamp: time.Now().Format(time.RFC3339),
 	}
 	var sampledValue = SampledValue{
 		Value:     RandomString(10),
@@ -357,7 +356,7 @@ func MeterValueRequestFail() *MeterValuesRequest {
 	}
 
 	var meterValue = MeterValue{
-		Timestamp: "2021-12-03",
+		TimeStamp: "2021-12-03",
 	}
 	var sampledValue = SampledValue{
 		Value:     RandomString(10),
@@ -597,7 +596,7 @@ func TestStartTransactionResponse(t *testing.T) {
 func StopTransactionRequestSuccess() *StopTransactionRequest {
 
 	var meterValue = MeterValue{
-		Timestamp: time.Now().Format(time.RFC3339),
+		TimeStamp: time.Now().Format(time.RFC3339),
 	}
 
 	var sampledValue = SampledValue{
@@ -627,7 +626,7 @@ func StopTransactionRequestSuccess() *StopTransactionRequest {
 func StopTransactionRequestFail() *StopTransactionRequest {
 
 	var meterValue = MeterValue{
-		Timestamp: "2021-12-03",
+		TimeStamp: "2021-12-03",
 	}
 	var sampledValue = SampledValue{
 		Value:     RandomString(10),

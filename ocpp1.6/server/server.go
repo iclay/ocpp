@@ -282,7 +282,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 		log.Errorf("id(%s) already connect, please wait about %ds and try again", p.String(), conf.HeartbeatTimeout)
 		conn.WriteControl(websocket.CloseMessage,
 			websocket.FormatCloseMessage(websocket.CloseProtocolError,
-				fmt.Sprintf("id(%s) already connect, wait a while and try again", p.String())), time.Now().Add(timeoutDuration))
+				fmt.Sprintf("id(%s) already connect, wait about %ds and try again", p.String(), conf.HeartbeatTimeout)), time.Now().Add(timeoutDuration))
 		conn.Close()
 		return
 	}

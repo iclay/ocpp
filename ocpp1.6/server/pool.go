@@ -32,7 +32,7 @@ type ocppTypePools struct {
 	New   func(t reflect.Type) interface{}
 }
 
-func (p ocppTypePools) init(t reflect.Type) {
+func (p *ocppTypePools) init(t reflect.Type) {
 	tp := &sync.Pool{}
 	tp.New = func() interface{} {
 		return p.New(t)
@@ -42,7 +42,7 @@ func (p ocppTypePools) init(t reflect.Type) {
 	p.pools[t] = tp
 }
 
-func (p ocppTypePools) put(t reflect.Type, x interface{}) {
+func (p *ocppTypePools) put(t reflect.Type, x interface{}) {
 	if o, ok := x.(Reset); ok {
 		o.Reset()
 	}
@@ -52,7 +52,7 @@ func (p ocppTypePools) put(t reflect.Type, x interface{}) {
 	pool.Put(x)
 }
 
-func (p ocppTypePools) get(t reflect.Type) interface{} {
+func (p *ocppTypePools) get(t reflect.Type) interface{} {
 	p.mu.RLock()
 	pool := p.pools[t]
 	p.mu.RUnlock()
@@ -61,13 +61,13 @@ func (p ocppTypePools) get(t reflect.Type) interface{} {
 
 type ocppType struct{}
 
-func (p ocppType) init(t reflect.Type) {
+func (p *ocppType) init(t reflect.Type) {
 }
 
-func (p ocppType) get(t reflect.Type) interface{} {
+func (p *ocppType) get(t reflect.Type) interface{} {
 	return reflectInstance(t)
 }
-func (p ocppType) put(t reflect.Type, x interface{}) {
+func (p *ocppType) put(t reflect.Type, x interface{}) {
 	if o, ok := x.(Reset); ok {
 		o.Reset()
 	}
@@ -85,12 +85,12 @@ func SupportObjectPool(support bool) opt {
 	return func(o *option) {
 		switch support {
 		case true:
-			o.object = ocppTypePools{
+			o.object = &ocppTypePools{
 				pools: make(map[reflect.Type]*sync.Pool),
 				New:   reflectInstance,
 			}
 		default:
-			o.object = ocppType{}
+			o.object = &ocppType{}
 		}
 	}
 }
