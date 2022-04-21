@@ -295,8 +295,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		log.Errorf("ignoring this message, may be conn close,id(%s), wsmsg(%s),wsmsg_type(%s)", ws.id, String(wsmsg), CallResult)
 		return
 	}
-	action := pendingReq.call.Action
-	if action == "" {
+	if pendingReq.call.UniqueID != uniqueid {
 		log.Errorf("action is nil, may be client response timeout or center never request,id(%s),wsmsg(%s),wsmsg_type(%s)", ws.id, String(wsmsg), CallResult)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
@@ -306,6 +305,7 @@ func (ws *Wsconn) callResultHandler(uniqueid string, wsmsg []byte, fields []inte
 		}
 		return
 	}
+	action := pendingReq.call.Action
 	ocpptrait, ok := ws.server.ocpp16map.GetTraitAction(action)
 	if !ok {
 		log.Errorf("not support action(%s) current,id(%s),wsmsg(%s),wsmsg_type(%s)", action, ws.id, String(wsmsg), CallResult)
@@ -395,8 +395,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		log.Errorf("ignoring this message, may be conn close,id(%s), wsmsg(%s),wsmsg_type(%s)", ws.id, String(wsmsg), CallError)
 		return
 	}
-	action := pendingReq.call.Action
-	if action == "" {
+	if pendingReq.call.UniqueID != uniqueid {
 		log.Errorf("action is nil, may be client response timeout or center never request,id(%s),wsmsg(%s),wsmsg_type(%s)", ws.id, String(wsmsg), CallError)
 		if err := ws.sendCallError(uniqueid, &Error{
 			ErrorCode:        protocol.CallInternalError,
@@ -406,6 +405,7 @@ func (ws *Wsconn) callErrorHandler(uniqueid string, wsmsg []byte, fields []inter
 		}
 		return
 	}
+	action := pendingReq.call.Action
 	callError := protocol.CallError{
 		MessageTypeID:    protocol.CALL_ERROR,
 		UniqueID:         uniqueid,
