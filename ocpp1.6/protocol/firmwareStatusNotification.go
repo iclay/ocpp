@@ -35,6 +35,9 @@ type FirmwareStatusNotificationRequest struct {
 func (FirmwareStatusNotificationRequest) Action() string {
 	return FirmwareStatusNotificationName
 }
+func (r *FirmwareStatusNotificationRequest) Reset() {
+	r.Status = ""
+}
 
 type FirmwareStatusNotificationResponse struct {
 }
@@ -42,3 +45,5 @@ type FirmwareStatusNotificationResponse struct {
 func (FirmwareStatusNotificationResponse) Action() string {
 	return FirmwareStatusNotificationName
 }
+
+func (r *FirmwareStatusNotificationResponse) Reset() {}

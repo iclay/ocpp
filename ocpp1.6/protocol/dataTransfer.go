@@ -26,6 +26,12 @@ func (DataTransferRequest) Action() string {
 	return DataTransferName
 }
 
+func (r *DataTransferRequest) Reset() {
+	r.VendorId = ""
+	r.MessageId = ""
+	r.Data = ""
+}
+
 type DataTransferStatus string
 
 const (
@@ -42,4 +48,9 @@ type DataTransferResponse struct {
 
 func (DataTransferResponse) Action() string {
 	return DataTransferName
+}
+
+func (r *DataTransferResponse) Reset() {
+	r.Status = ""
+	r.Data = ""
 }

@@ -33,9 +33,15 @@ func (DiagnosticsStatusNotificationRequest) Action() string {
 	return DiagnosticsStatusNotificationName
 }
 
+func (r *DiagnosticsStatusNotificationRequest) Reset() {
+	r.Status = ""
+}
+
 type DiagnosticsStatusNotificationResponse struct {
 }
 
 func (DiagnosticsStatusNotificationResponse) Action() string {
 	return DiagnosticsStatusNotificationName
 }
+
+func (r *DiagnosticsStatusNotificationResponse) Reset() {}

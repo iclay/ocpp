@@ -25,6 +25,10 @@ func (UnlockConnectorRequest) Action() string {
 	return UnlockConnectorName
 }
 
+func (r *UnlockConnectorRequest) Reset() {
+	r.ConnectorId = nil
+}
+
 type UnlockStatus string
 
 const (
@@ -39,4 +43,8 @@ type UnlockConnectorResponse struct {
 
 func (UnlockConnectorResponse) Action() string {
 	return UnlockConnectorName
+}
+
+func (r *UnlockConnectorResponse) Reset() {
+	r.Status = ""
 }

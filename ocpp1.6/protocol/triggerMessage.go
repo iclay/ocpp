@@ -44,10 +44,18 @@ func (TriggerMessageRequest) Action() string {
 	return TriggerMessageName
 }
 
+func (r *TriggerMessageRequest) Reset() {
+	r.RequestedMessage = ""
+	r.ConnectorId = nil
+}
+
 type TriggerMessageResponse struct {
 	Status TriggerMessageStatus `json:"status" validate:"required,triggerMessageStatus"`
 }
 
 func (TriggerMessageResponse) Action() string {
 	return TriggerMessageName
+}
+func (r *TriggerMessageResponse) Reset() {
+	r.Status = ""
 }

@@ -11,6 +11,13 @@ type StartTransactionRequest struct {
 func (StartTransactionRequest) Action() string {
 	return StartTransactionName
 }
+func (r *StartTransactionRequest) Reset() {
+	r.ConnectorId = nil
+	r.IdTag = ""
+	r.MeterStart = nil
+	r.ReservationId = nil
+	r.Timestamp = ""
+}
 
 type StartTransactionResponse struct {
 	IdTagInfo     IdTagInfo `json:"idTagInfo" validate:"required"`
@@ -19,4 +26,9 @@ type StartTransactionResponse struct {
 
 func (StartTransactionResponse) Action() string {
 	return StartTransactionName
+}
+
+func (r *StartTransactionResponse) Reset() {
+	r.IdTagInfo = IdTagInfo{}
+	r.TransactionId = nil
 }

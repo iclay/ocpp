@@ -191,9 +191,16 @@ type MeterValuesRequest struct {
 func (MeterValuesRequest) Action() string {
 	return MeterValuesName
 }
+func (r *MeterValuesRequest) Reset() {
+	r.ConnectorId = nil
+	r.TransactionId = nil
+	r.MeterValue = nil
+}
 
 type MeterValuesResponse struct{}
 
 func (MeterValuesResponse) Action() string {
 	return MeterValuesName
 }
+
+func (r *MeterValuesResponse) Reset() {}

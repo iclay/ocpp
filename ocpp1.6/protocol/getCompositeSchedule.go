@@ -30,6 +30,11 @@ type GetCompositeScheduleRequest struct {
 func (GetCompositeScheduleRequest) Action() string {
 	return GetCompositeScheduleName
 }
+func (r *GetCompositeScheduleRequest) Reset() {
+	r.ConnectorId = nil
+	r.Duration = nil
+	r.ChargingRateUnit = ""
+}
 
 type GetCompositeScheduleResponse struct {
 	Status           GetCompositeScheduleStatus `json:"status" validate:"required,compositeScheduleStatus"`
@@ -40,4 +45,10 @@ type GetCompositeScheduleResponse struct {
 
 func (GetCompositeScheduleResponse) Action() string {
 	return GetCompositeScheduleName
+}
+func (r *GetCompositeScheduleResponse) Reset() {
+	r.Status = ""
+	r.ConnectorId = nil
+	r.ScheduleStart = ""
+	r.ChargingSchedule = ChargingSchedule{}
 }

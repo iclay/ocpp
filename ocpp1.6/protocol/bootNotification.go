@@ -40,6 +40,18 @@ func (BootNotificationRequest) Action() string {
 	return BootNotificationName
 }
 
+func (r *BootNotificationRequest) Reset() {
+	r.ChargePointVendor = ""
+	r.ChargePointModel = ""
+	r.ChargePointSerialNumber = ""
+	r.ChargeBoxSerialNumber = ""
+	r.FirmwareVersion = ""
+	r.Iccid = ""
+	r.Imsi = ""
+	r.MeterType = ""
+	r.MeterSerialNumber = ""
+}
+
 type BootNotificationResponse struct {
 	CurrentTime string             `json:"currentTime" validate:"required,dateTime"`
 	Interval    *int               `json:"interval" validate:"required,gte=0"`
@@ -48,4 +60,10 @@ type BootNotificationResponse struct {
 
 func (BootNotificationResponse) Action() string {
 	return BootNotificationName
+}
+
+func (r *BootNotificationResponse) Reset() {
+	r.CurrentTime = ""
+	r.Interval = nil
+	r.Status = ""
 }

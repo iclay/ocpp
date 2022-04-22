@@ -31,6 +31,11 @@ func (SetChargingProfileRequest) Action() string {
 	return SetChargingProfileName
 }
 
+func (r *SetChargingProfileRequest) Reset() {
+	r.ConnectorId = nil
+	r.ChargingProfile = ChargingProfile{}
+}
+
 type ChargingProfileStatus string
 
 type SetChargingProfileResponse struct {
@@ -39,4 +44,7 @@ type SetChargingProfileResponse struct {
 
 func (SetChargingProfileResponse) Action() string {
 	return SetChargingProfileName
+}
+func (r *SetChargingProfileResponse) Reset() {
+	r.Status = ""
 }

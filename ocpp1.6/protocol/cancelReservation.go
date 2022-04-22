@@ -33,10 +33,18 @@ func (CancelReservationRequest) Action() string {
 	return CancelReservationName
 }
 
+func (r *CancelReservationRequest) Reset() {
+	r.ReservationId = nil
+}
+
 type CancelReservationResponse struct {
 	Status CancelReservationStatus `json:"status" validate:"required,cancelReservationStatus"`
 }
 
 func (CancelReservationResponse) Action() string {
 	return CancelReservationName
+}
+
+func (r *CancelReservationResponse) Reset() {
+	r.Status = ""
 }

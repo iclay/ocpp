@@ -47,6 +47,14 @@ type StopTransactionRequest struct {
 func (StopTransactionRequest) Action() string {
 	return StopTransactionName
 }
+func (r *StopTransactionRequest) Reset() {
+	r.IdTag = ""
+	r.MeterStop = nil
+	r.Timestamp = ""
+	r.TransactionId = nil
+	r.Reason = ""
+	r.TransactionData = nil
+}
 
 type StopTransactionResponse struct {
 	IdTagInfo IdTagInfo `json:"idTagInfo,omitempty" validate:"omitempty"`
@@ -54,4 +62,8 @@ type StopTransactionResponse struct {
 
 func (StopTransactionResponse) Action() string {
 	return StopTransactionName
+}
+
+func (r *StopTransactionResponse) Reset() {
+	r.IdTagInfo = IdTagInfo{}
 }

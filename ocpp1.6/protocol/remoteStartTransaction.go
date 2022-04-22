@@ -76,6 +76,12 @@ func (RemoteStartTransactionRequest) Action() string {
 	return RemoteStartTransactionName
 }
 
+func (r *RemoteStartTransactionRequest) Reset() {
+	r.ConnectorId = nil
+	r.IdTag = ""
+	r.ChargingProfile = nil
+}
+
 const (
 	remoteStartAccepted RemoteStartStatus = "Accepted"
 	remoteStartRejected RemoteStartStatus = "Rejected"
@@ -87,4 +93,8 @@ type RemoteStartTransactionResponse struct {
 
 func (RemoteStartTransactionResponse) Action() string {
 	return RemoteStartTransactionName
+}
+
+func (r *RemoteStartTransactionResponse) Reset() {
+	r.Status = ""
 }

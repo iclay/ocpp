@@ -34,6 +34,14 @@ type ReserveNowRequest struct {
 	ReservationId *int   `json:"reservationId" validate:"required"`
 }
 
+func (r *ReserveNowRequest) Reset() {
+	r.ConnectorId = nil
+	r.ExpiryDate = ""
+	r.IdTag = ""
+	r.ParentIdTag = ""
+	r.ReservationId = nil
+}
+
 func (ReserveNowRequest) Action() string {
 	return ReserveNowName
 }
@@ -44,4 +52,8 @@ type ReserveNowResponse struct {
 
 func (ReserveNowResponse) Action() string {
 	return ReserveNowName
+}
+
+func (r *ReserveNowResponse) Reset() {
+	r.Status = ""
 }

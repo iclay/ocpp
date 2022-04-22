@@ -129,12 +129,30 @@ type dispatcher struct {
 	stopC           chan error
 }
 
-func NewDefaultDispatcher(s *Server) (d *dispatcher) {
+var defalutResponseTimeout = 5
+
+func DefaultDispatcher(s *Server) (d *dispatcher) {
 	d = &dispatcher{
 		server:          s,
 		callStateMap:    newCallStateMap(),
 		requestQueueMap: newRequesQueueMap(),
-		timeout:         time.Second * 5,
+		timeout:         time.Second * time.Duration(defalutResponseTimeout),
+		requestC:        make(chan string, 10),
+		nextReadyC:      make(chan string, 10),
+		timeoutC:        make(chan timeoutFlag),
+		cancelC:         make(chan string, 10),
+		stopC:           make(chan error),
+	}
+	go d.run()
+	return d
+}
+
+func DispatcherWithTimeout(s *Server, resTimeout int) (d *dispatcher) {
+	d = &dispatcher{
+		server:          s,
+		callStateMap:    newCallStateMap(),
+		requestQueueMap: newRequesQueueMap(),
+		timeout:         time.Second * time.Duration(resTimeout),
 		requestC:        make(chan string, 10),
 		nextReadyC:      make(chan string, 10),
 		timeoutC:        make(chan timeoutFlag),

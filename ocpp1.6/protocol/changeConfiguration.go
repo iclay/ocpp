@@ -26,6 +26,11 @@ func (ChangeConfigurationRequest) Action() string {
 	return ChangeConfigurationName
 }
 
+func (r *ChangeConfigurationRequest) Reset() {
+	r.Key = ""
+	r.Value = ""
+}
+
 type ConfigurationStatus string
 
 const (
@@ -41,4 +46,8 @@ type ChangeConfigurationResponse struct {
 
 func (ChangeConfigurationResponse) Action() string {
 	return ChangeConfigurationName
+}
+
+func (r *ChangeConfigurationResponse) Reset() {
+	r.Status = ""
 }

@@ -22,6 +22,7 @@ type GConf struct {
 	TLSCertificate    string   `label:"tls_cert"`
 	TLSCertificateKey string   `label:"tls_key"`
 	HeartbeatTimeout  int      `label:"heartbeat_timeout"`
+	ResponseTimeout   int      `label:"response_timeout"`
 	ETCDList          []string `label:"etcd_list" parse_func:"parse_string_list"`
 	ETCDBasePath      string   `label:"etcd_base_path"`
 	RPCAddress        string   `label:"rpc_addr"`

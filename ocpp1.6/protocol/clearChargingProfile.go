@@ -44,10 +44,21 @@ func (ClearChargingProfileRequest) Action() string {
 	return ClearChargingProfileName
 }
 
+func (r *ClearChargingProfileRequest) Reset() {
+	r.Id = nil
+	r.ConnectorId = nil
+	r.ChargingProfilePurpose = ""
+	r.StackLevel = nil
+}
+
 type ClearChargingProfileResponse struct {
 	Status ClearChargingProfileStatus `json:"status" validate:"required,clearChargingProfileStatus"`
 }
 
 func (ClearChargingProfileResponse) Action() string {
 	return ClearChargingProfileName
+}
+
+func (r *ClearChargingProfileResponse) Reset() {
+	r.Status = ""
 }

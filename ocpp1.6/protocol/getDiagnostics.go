@@ -12,10 +12,22 @@ func (GetDiagnosticsRequest) Action() string {
 	return GetDiagnosticsName
 }
 
+func (r *GetDiagnosticsRequest) Reset() {
+	r.Location = ""
+	r.Retries = nil
+	r.RetryInterval = nil
+	r.StartTime = ""
+	r.StopTime = ""
+}
+
 type GetDiagnosticsResponse struct {
 	FileName string `json:"fileName,omitempty" validate:"omitempty,max=255"`
 }
 
 func (GetDiagnosticsResponse) Action() string {
 	return GetDiagnosticsName
+}
+
+func (r *GetDiagnosticsResponse) Reset() {
+	r.FileName = ""
 }

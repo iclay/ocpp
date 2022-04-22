@@ -29,10 +29,16 @@ func (ClearCacheRequest) Action() string {
 	return ClearCacheName
 }
 
+func (r *ClearCacheRequest) Reset() {}
+
 type ClearCacheResponse struct {
 	Status ClearCacheStatus `json:"status" validate:"required,cacheStatus"`
 }
 
 func (ClearCacheResponse) Action() string {
 	return ClearCacheName
+}
+
+func (r *ClearCacheResponse) Reset() {
+	r.Status = ""
 }

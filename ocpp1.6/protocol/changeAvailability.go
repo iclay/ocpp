@@ -56,6 +56,11 @@ type ChangeAvailabilityRequest struct {
 	Type        AvailabilityType `json:"type" validate:"required,availabilityType"`
 }
 
+func (r *ChangeAvailabilityRequest) Reset() {
+	r.ConnectorId = nil
+	r.Type = ""
+}
+
 func (ChangeAvailabilityRequest) Action() string {
 	return ChangeAvailabilityName
 }
@@ -66,4 +71,8 @@ type ChangeAvailabilityResponse struct {
 
 func (ChangeAvailabilityResponse) Action() string {
 	return ChangeAvailabilityName
+}
+
+func (r *ChangeAvailabilityResponse) Reset() {
+	r.Status = ""
 }

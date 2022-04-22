@@ -38,6 +38,10 @@ type ResetRequest struct {
 	Type ResetType `json:"type" validate:"required,resetType"`
 }
 
+func (r *ResetRequest) Reset() {
+	r.Type = ""
+}
+
 func (ResetRequest) Action() string {
 	return ResetName
 }
@@ -55,4 +59,8 @@ type ResetResponse struct {
 
 func (ResetResponse) Action() string {
 	return ResetName
+}
+
+func (r *ResetResponse) Reset() {
+	r.Status = ""
 }

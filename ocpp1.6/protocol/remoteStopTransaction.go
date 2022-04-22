@@ -21,6 +21,10 @@ type RemoteStopTransactionRequest struct {
 	TransactionId *int `json:"transactionId" validate:"required"`
 }
 
+func (r *RemoteStopTransactionRequest) Reset() {
+	r.TransactionId = nil
+}
+
 func (RemoteStopTransactionRequest) Action() string {
 	return RemoteStopTransactionName
 }
@@ -38,4 +42,8 @@ type RemoteStopTransactionResponse struct {
 
 func (RemoteStopTransactionResponse) Action() string {
 	return RemoteStopTransactionName
+}
+
+func (r *RemoteStopTransactionResponse) Reset() {
+	r.Status = ""
 }

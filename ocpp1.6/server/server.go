@@ -103,7 +103,7 @@ func (s *Server) connExists(id string) bool {
 	return s.wsconns.connExists(id)
 }
 
-func (s *Server) setDefaultDispatcher(d *dispatcher) {
+func (s *Server) setDispatcher(d *dispatcher) {
 	s.dispatcher = d
 }
 
@@ -156,7 +156,7 @@ func (s *Server) Stop() {
 	}
 }
 
-var defaultServer = func(useEpoll bool) *Server {
+var defaultServer = func(useEpoll bool, responseTimeout int) *Server {
 	s := &Server{
 		ginServer:    gin.Default(),
 		upgrader:     websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
@@ -167,7 +167,11 @@ var defaultServer = func(useEpoll bool) *Server {
 		actionPlugin: local.NewActionPlugin(), //default action plugin
 	}
 	pprof.Register(s.ginServer)
-	s.setDefaultDispatcher(NewDefaultDispatcher(s))
+	if responseTimeout > 0 {
+		s.setDispatcher(DispatcherWithTimeout(s, responseTimeout))
+	} else {
+		s.setDispatcher(DefaultDispatcher(s))
+	}
 	s.initOCPPTypePools(s.ocpp16map.SupportActions())
 	if useEpoll {
 		var epoller *epoller
@@ -210,8 +214,8 @@ var defaultServer = func(useEpoll bool) *Server {
 }
 
 func NewDefaultServer() *Server {
-	useEpoll := config.GCONF.UseEpoll
-	return defaultServer(useEpoll)
+	useEpoll, responseTimeout := config.GCONF.UseEpoll, config.GCONF.ResponseTimeout
+	return defaultServer(useEpoll, responseTimeout)
 }
 
 func (s *Server) initOCPPTypePools(actions []string) {

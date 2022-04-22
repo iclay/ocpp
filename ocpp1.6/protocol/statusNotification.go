@@ -77,8 +77,20 @@ func (StatusNotificationRequest) Action() string {
 	return StatusNotificationName
 }
 
+func (r *StatusNotificationRequest) Reset() {
+	r.ConnectorId = nil
+	r.ErrorCode = ""
+	r.Info = ""
+	r.Status = ""
+	r.Timestamp = ""
+	r.VendorId = ""
+	r.VendorErrorCode = ""
+}
+
 type StatusNotificationResponse struct{}
 
 func (StatusNotificationResponse) Action() string {
 	return StatusNotificationName
 }
+
+func (r *StatusNotificationResponse) Reset() {}

@@ -55,10 +55,20 @@ func (SendLocalListRequest) Action() string {
 	return SendLocalListName
 }
 
+func (r *SendLocalListRequest) Reset() {
+	r.ListVersion = nil
+	r.LocalAuthorizationList = nil
+	r.UpdateType = ""
+}
+
 type SendLocalListResponse struct {
 	Status UpdateStatus `json:"status" validate:"required,updateStatus"`
 }
 
 func (SendLocalListResponse) Action() string {
 	return SendLocalListName
+}
+
+func (r *SendLocalListResponse) Reset() {
+	r.Status = ""
 }

@@ -10,6 +10,10 @@ type GetConfigurationRequest struct {
 	Key []string `json:"key,omitempty" validate:"omitempty,unique,dive,max=50"`
 }
 
+func (r *GetConfigurationRequest) Reset() {
+	r.Key = nil
+}
+
 func (GetConfigurationRequest) Action() string {
 	return GetConfigurationName
 }
@@ -21,4 +25,9 @@ type GetConfigurationResponse struct {
 
 func (GetConfigurationResponse) Action() string {
 	return GetConfigurationName
+}
+
+func (r *GetConfigurationResponse) Reset() {
+	r.ConfigurationKey = nil
+	r.UnknownKey = nil
 }

@@ -10,9 +10,17 @@ type UpdateFirmwareRequest struct {
 func (UpdateFirmwareRequest) Action() string {
 	return UpdateFirmwareName
 }
+func (r *UpdateFirmwareRequest) Reset() {
+	r.Location = ""
+	r.Retries = nil
+	r.RetrieveDate = ""
+	r.RetryInterval = nil
+}
 
 type UpdateFirmwareResponse struct{}
 
 func (UpdateFirmwareResponse) Action() string {
 	return UpdateFirmwareName
 }
+
+func (r *UpdateFirmwareResponse) Reset() {}
