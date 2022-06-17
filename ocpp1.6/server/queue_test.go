@@ -3,16 +3,16 @@ package server
 import "testing"
 
 func TestQueueSimple(t *testing.T) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 
 	for i := 0; i < minQueueLen; i++ {
-		q.Push(i)
+		q.push(i)
 	}
 	for i := 0; i < minQueueLen; i++ {
-		if v, _ := q.Peek(); v.(int) != i {
+		if v, _ := q.peek(); v.(int) != i {
 			t.Error("peek", i, "had value", v)
 		}
-		x, _ := q.Pop()
+		x, _ := q.pop()
 		if x.(int) != i {
 			t.Error("Pop", i, "had value", x)
 		}
@@ -20,87 +20,87 @@ func TestQueueSimple(t *testing.T) {
 }
 
 func TestQueueWrapping(t *testing.T) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 
 	for i := 0; i < minQueueLen; i++ {
-		q.Push(i)
+		q.push(i)
 	}
 	for i := 0; i < 3; i++ {
-		q.Pop()
-		q.Push(minQueueLen + i)
+		q.pop()
+		q.push(minQueueLen + i)
 	}
 
 	for i := 0; i < minQueueLen; i++ {
-		if v, _ := q.Peek(); v.(int) != i+3 {
+		if v, _ := q.peek(); v.(int) != i+3 {
 			t.Error("peek", i, "had value", v)
 		}
-		q.Pop()
+		q.pop()
 	}
 }
 
 func TestQueueLength(t *testing.T) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 
-	if q.Len() != 0 {
+	if q.len() != 0 {
 		t.Error("empty queue length not 0")
 	}
 
 	for i := 0; i < 1000; i++ {
-		q.Push(i)
-		if q.Len() != i+1 {
-			t.Error("Push: queue with", i, "elements has length", q.Len())
+		q.push(i)
+		if q.len() != i+1 {
+			t.Error("Push: queue with", i, "elements has length", q.len())
 		}
 	}
 	for i := 0; i < 1000; i++ {
-		q.Pop()
-		if q.Len() != 1000-i-1 {
-			t.Error("Pop: queue with", 1000-i-1, "elements has length", q.Len())
+		q.pop()
+		if q.len() != 1000-i-1 {
+			t.Error("Pop: queue with", 1000-i-1, "elements has length", q.len())
 		}
 	}
 }
 
 func TestQueuePeekOutOfRangePanics(t *testing.T) {
-	q := NewRequestQueue()
-	if _, ok := q.Peek(); !ok {
+	q := newRequestQueue()
+	if _, ok := q.peek(); !ok {
 		t.Log("peek: when queue is empty, return false")
 	}
-	q.Push(1)
-	q.Pop()
-	if v, ok := q.Peek(); ok {
+	q.push(1)
+	q.pop()
+	if v, ok := q.peek(); ok {
 		t.Logf("peek: value(%v)", v.(int))
 	}
 
 }
 
 func TestQueueRemoveOutOfRangePanics(t *testing.T) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 
-	if _, ok := q.Pop(); !ok {
+	if _, ok := q.pop(); !ok {
 		t.Log("Pop: when queue is empty, return false")
 	}
 
-	q.Push(1)
-	if v, ok := q.Pop(); ok {
+	q.push(1)
+	if v, ok := q.pop(); ok {
 		t.Logf("Pop: value(%v)", v.(int))
 	}
 }
 
 func BenchmarkQueueSerial(b *testing.B) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 	for i := 0; i < b.N; i++ {
-		q.Push(nil)
+		q.push(nil)
 	}
 	for i := 0; i < b.N; i++ {
-		q.Peek()
-		q.Pop()
+		q.peek()
+		q.pop()
 	}
 }
 
 func BenchmarkQueueTickTock(b *testing.B) {
-	q := NewRequestQueue()
+	q := newRequestQueue()
 	for i := 0; i < b.N; i++ {
-		q.Push(nil)
-		q.Peek()
-		q.Pop()
+		q.push(nil)
+		q.peek()
+		q.pop()
 	}
 }

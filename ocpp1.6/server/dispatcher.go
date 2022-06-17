@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Activecallhandler is used to send requests from the center system to the charging point
 type ActiveCallHandler func(ctx context.Context, id string, call *protocol.Call) error
 
 type request struct {
@@ -51,7 +52,7 @@ func (m *callStateMap) deleteRequest(id string) {
 	delete(m.pendingCallState, id)
 }
 
-func (m *callStateMap) AddRequest(id string, request *request) error {
+func (m *callStateMap) addRequest(id string, request *request) error {
 	m.Lock()
 	defer m.Unlock()
 	if req, ok := m.pendingCallState[id]; ok && request.call.UID() != "" && req.call.UID() == "" {
@@ -70,18 +71,18 @@ func (m *callStateMap) requestDone(id string, uniqueid string) {
 }
 
 type requestQueueMap struct {
-	queueMap map[string]Queue
+	queueMap map[string]queue
 	sync.RWMutex
 }
 
 func newRequesQueueMap() *requestQueueMap {
-	return &requestQueueMap{queueMap: make(map[string]Queue)}
+	return &requestQueueMap{queueMap: make(map[string]queue)}
 }
 
 func (m *requestQueueMap) createNewQueue(id string) {
 	m.Lock()
 	defer m.Unlock()
-	m.queueMap[id] = NewRequestQueue()
+	m.queueMap[id] = newRequestQueue()
 	return
 }
 
@@ -92,7 +93,7 @@ func (m *requestQueueMap) queueExists(id string) bool {
 	return ok
 }
 
-func (m *requestQueueMap) getQueue(id string) (Queue, bool) {
+func (m *requestQueueMap) getQueue(id string) (queue, bool) {
 	m.RLock()
 	defer m.RUnlock()
 	q, ok := m.queueMap[id]
@@ -112,8 +113,8 @@ func (m *requestQueueMap) pushRequset(id string, request interface{}) error {
 	if !ok {
 		return fmt.Errorf("push request failed, may be conn has closed down, id(%s), request(%+v)", id, request)
 	}
-	queue.Push(request)
-	log.Debugf("queue remain(%d), id(%s)", queue.Len(), id)
+	queue.push(request)
+	log.Debugf("queue remain(%d), id(%s)", queue.len(), id)
 	return nil
 }
 
@@ -193,7 +194,7 @@ func (d *dispatcher) run() {
 	contextMap := make(map[string]timeoutContext)
 	var allow bool
 	var ok bool
-	var q Queue
+	var q queue
 	var id string
 	var ctx timeoutContext
 	defer func() {
@@ -248,7 +249,7 @@ func (d *dispatcher) run() {
 		case id := <-d.cancelC: //if the connection is closed,delete id from contextMap
 			delete(contextMap, id)
 		}
-		if allow && !q.IsEmpty() {
+		if allow && !q.isEmpty() {
 			contextMap[id] = d.dispatchNextRequest(id)
 			allow = false
 		}
@@ -270,7 +271,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 		log.Errorf("get queue error, conn may be close, id(%s)", id)
 		return
 	}
-	req, ok := q.Peek()
+	req, ok := q.peek()
 	if !ok {
 		log.Errorf("queue peek is empty,id(%s)", id)
 		return
@@ -284,7 +285,7 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 		log.Errorf("json Marshal error is error, id(%s),uniqueid(%s), request(%+v)", id, uniqueid, request)
 		return
 	}
-	if err = d.callStateMap.AddRequest(id, request); err != nil {
+	if err = d.callStateMap.addRequest(id, request); err != nil {
 		log.Error(err)
 		return
 	}
@@ -332,14 +333,14 @@ func (d *dispatcher) dispatchNextRequest(id string) (timeoutCtx timeoutContext) 
 }
 
 func (d *dispatcher) requestDone(id string, uniqueid string) {
-	var q Queue
+	var q queue
 	q, ok := d.requestQueueMap.getQueue(id)
 	if !ok {
 		log.Errorf("get queue error, conn may be close, id(%s), uniqueid(%s)", id, uniqueid)
 		return
 	}
 	requestQueue := q.(*lockQueue)
-	req, ok := requestQueue.Peek()
+	req, ok := requestQueue.peek()
 	if !ok {
 		log.Errorf("queue peek is empty,id(%s), uniqueid(%s)", id, uniqueid)
 		return
@@ -349,7 +350,7 @@ func (d *dispatcher) requestDone(id string, uniqueid string) {
 		log.Errorf("requestid is not equal to uniqueid,maybe due to request timeout, id(%s), requestid(%s), uniqueid(%s),latest request(%+v)", id, request.call.UID(), uniqueid, request)
 		return
 	}
-	requestQueue.Pop()
+	requestQueue.pop()
 	d.callStateMap.requestDone(id, uniqueid)
 	d.nextReadyC <- id
 }

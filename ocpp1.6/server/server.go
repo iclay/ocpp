@@ -21,6 +21,11 @@ import (
 
 var serverSubprotocols = []string{"ocpp1.6"}
 
+const (
+	defaultReadBufferSize  = 16 * 1024
+	defaultWriteBufferSize = 16 * 1024
+)
+
 type ActionPlugin interface {
 	RequestHandler(action string) (protocol.RequestHandler, bool)
 	ResponseHandler(action string) (protocol.ResponseHandler, bool)
@@ -158,8 +163,10 @@ func (s *Server) Stop() {
 
 var defaultServer = func(useEpoll bool, responseTimeout int) *Server {
 	s := &Server{
-		ginServer:    gin.Default(),
-		upgrader:     websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		ginServer: gin.Default(),
+		upgrader: websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true },
+			ReadBufferSize:  defaultReadBufferSize,
+			WriteBufferSize: defaultWriteBufferSize},
 		wsconns:      newWsconns(),
 		validate:     protocol.Validate,
 		ocpp16map:    protocol.OCPP16M,
@@ -228,12 +235,12 @@ func (s *Server) initOCPPTypePools(actions []string) {
 	}
 }
 
-type Point struct {
+type point struct {
 	Name string `uri:"name" binding:"required,uuid"`
 	ID   string `uri:"id" binding:"required"`
 }
 
-func (c *Point) String() string {
+func (c *point) String() string {
 	return fmt.Sprintf("%s-%s", c.Name, c.ID)
 }
 func (s *Server) Serve(addr string, path string) {
@@ -248,7 +255,7 @@ func (s *Server) ServeTLS(addr string, path string, tlsCertificate string, tlsCe
 
 func (s *Server) wsHandler(c *gin.Context) {
 	conf := config.GCONF
-	var p Point
+	var p point
 	c.ShouldBindUri(&p)
 	var ocppProto string
 	clientSubprotocols := websocket.Subprotocols(c.Request)

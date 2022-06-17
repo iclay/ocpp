@@ -2,12 +2,12 @@ package server
 
 import "sync"
 
-type Queue interface {
-	Push(v interface{})
-	Pop() (interface{}, bool)
-	Peek() (interface{}, bool)
-	Len() int
-	IsEmpty() bool
+type queue interface {
+	push(v interface{})
+	pop() (interface{}, bool)
+	peek() (interface{}, bool)
+	len() int
+	isEmpty() bool
 }
 
 //minQueueLen must be power of 2   x % n == x & (n - 1)
@@ -19,25 +19,25 @@ type lockQueue struct {
 	sync.RWMutex
 }
 
-func NewRequestQueue() *lockQueue {
+func newRequestQueue() *lockQueue {
 	return &lockQueue{
 		buf: make([]interface{}, minQueueLen),
 	}
 }
 
-func NewEpollEventsQueue() *lockQueue {
+func newEpollEventsQueue() *lockQueue {
 	return &lockQueue{
 		buf: make([]interface{}, minQueueLen),
 	}
 }
 
-func (q *lockQueue) Len() int {
+func (q *lockQueue) len() int {
 	q.RLock()
 	defer q.RUnlock()
 	return q.count
 }
 
-func (q *lockQueue) IsEmpty() bool {
+func (q *lockQueue) isEmpty() bool {
 	q.RLock()
 	defer q.RUnlock()
 	return q.count == 0
@@ -58,7 +58,7 @@ func (q *lockQueue) resize() {
 	q.buf = newBuf
 }
 
-func (q *lockQueue) Push(elem interface{}) {
+func (q *lockQueue) push(elem interface{}) {
 	q.Lock()
 	defer q.Unlock()
 	if q.count == len(q.buf) {
@@ -69,7 +69,7 @@ func (q *lockQueue) Push(elem interface{}) {
 	q.count++
 }
 
-func (q *lockQueue) Peek() (interface{}, bool) {
+func (q *lockQueue) peek() (interface{}, bool) {
 	q.RLock()
 	defer q.RUnlock()
 	if q.count <= 0 {
@@ -78,7 +78,7 @@ func (q *lockQueue) Peek() (interface{}, bool) {
 	return q.buf[q.head], true
 }
 
-func (q *lockQueue) Pop() (interface{}, bool) {
+func (q *lockQueue) pop() (interface{}, bool) {
 	q.Lock()
 	defer q.Unlock()
 	if q.count <= 0 {

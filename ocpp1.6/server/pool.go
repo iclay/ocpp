@@ -11,7 +11,7 @@ type object interface {
 	put(t reflect.Type, x interface{})
 }
 
-// reset defines Reset method for pooled object.
+// Reset defines Reset method for pooled object.
 type Reset interface {
 	Reset()
 }
@@ -81,6 +81,7 @@ func put(t reflect.Type, x interface{}) {
 	options.object.put(t, x)
 }
 
+//SupportObjectPool usede fore whether object pool is supported. if support, it will improve program performance
 func SupportObjectPool(support bool) opt {
 	return func(o *option) {
 		switch support {
@@ -96,18 +97,18 @@ func SupportObjectPool(support bool) opt {
 }
 
 /*pool used for epoll trigger task*/
-type TaskFunc func(interface{}) error
-type Task struct {
-	RunFunc TaskFunc
-	RunArg  interface{}
+type taskFunc func(interface{}) error
+type task struct {
+	runFunc taskFunc
+	runArg  interface{}
 }
 
-var taskPool = sync.Pool{New: func() interface{} { return new(Task) }}
+var taskPool = sync.Pool{New: func() interface{} { return new(task) }}
 
-func GetTask() *Task {
-	return taskPool.Get().(*Task)
+func getTask() *task {
+	return taskPool.Get().(*task)
 }
-func PutTask(task *Task) {
-	task.RunFunc, task.RunArg = nil, nil
+func putTask(task *task) {
+	task.runFunc, task.runArg = nil, nil
 	taskPool.Put(task)
 }

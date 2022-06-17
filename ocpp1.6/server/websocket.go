@@ -133,12 +133,12 @@ func (ws *Wsconn) requestHandler(uniqueid string, action string, req protocol.Re
 		}
 		log.Debugf("server response, id(%s), uniqueid(%s),action(%s), callResult(%+v)", ws.id, uniqueid, action, callResult)
 		if err = ws.server.validate.Struct(callResult); err != nil {
-			log.Errorf("validate callResult invalid, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, checkValidatorError(err, action))
+			log.Errorf("server response,validate callResult invalid, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, checkValidatorError(err, action))
 			return
 		}
 		result, err := json.Marshal(callResult)
 		if err != nil {
-			log.Errorf("marshal result error, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
+			log.Errorf("server response, marshal result error, id:(%s), uniqueid:(%s),action:(%s),err:(%v)", ws.id, uniqueid, action, err)
 			return
 		}
 		if err = ws.writeMessage(websocket.TextMessage, result); err != nil {
@@ -166,6 +166,7 @@ func (ws *Wsconn) writeMessage(messageType int, data []byte) error {
 	if ws.closed {
 		return fmt.Errorf("conn has closed down, id(%s)", ws.id)
 	}
+	log.Debugf("id:(%s), write:%s", ws.id, string(data))
 	ws.setWriteDeadTimeout(ws.timeout)
 	var err error
 	if err = ws.conn.WriteMessage(messageType, data); err != nil {

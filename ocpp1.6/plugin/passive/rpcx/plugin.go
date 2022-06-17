@@ -2,6 +2,7 @@ package rpcx
 
 import (
 	"context"
+	clientPlugin "github.com/rpcxio/rpcx-etcd/client"
 	"github.com/smallnest/rpcx/client"
 	"github.com/smallnest/rpcx/share"
 	"ocpp16/config"
@@ -35,17 +36,17 @@ func NewActionPlugin() *RPCXPlugin {
 }
 
 func (c *RPCXPlugin) init() {
-	d1 := client.NewEtcdV3Discovery(c.basePath, "ChargingCoreClient", c.etcdAddr, nil)
+	d1, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "ChargingCoreClient", c.etcdAddr, false, nil)
 	c.chargingCore = client.NewXClient("ChargingCoreClient", client.Failtry, client.RandomSelect, d1, client.DefaultOption)
-	d2 := client.NewEtcdV3Discovery(c.basePath, "SmartChargingClient", c.etcdAddr, nil)
+	d2, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "SmartChargingClient", c.etcdAddr, false, nil)
 	c.smartCharging = client.NewXClient("SmartChargingClient", client.Failtry, client.RandomSelect, d2, client.DefaultOption)
-	d3 := client.NewEtcdV3Discovery(c.basePath, "FirmwareManagementClient", c.etcdAddr, nil)
+	d3, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "FirmwareManagementClient", c.etcdAddr, false, nil)
 	c.firmwareManagement = client.NewXClient("FirmwareManagementClient", client.Failtry, client.RandomSelect, d3, client.DefaultOption)
-	d4 := client.NewEtcdV3Discovery(c.basePath, "ReservationClient", c.etcdAddr, nil)
+	d4, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "ReservationClient", c.etcdAddr, false, nil)
 	c.Reservation = client.NewXClient("ReservationClient", client.Failtry, client.RandomSelect, d4, client.DefaultOption)
-	d5 := client.NewEtcdV3Discovery(c.basePath, "RemoteTriggerClient", c.etcdAddr, nil)
+	d5, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "RemoteTriggerClient", c.etcdAddr, false, nil)
 	c.RemoteTrigger = client.NewXClient("RemoteTriggerClient", client.Failtry, client.RandomSelect, d5, client.DefaultOption)
-	d6 := client.NewEtcdV3Discovery(c.basePath, "LocalAuthListManagementClient", c.etcdAddr, nil)
+	d6, _ := clientPlugin.NewEtcdV3Discovery(c.basePath, "LocalAuthListManagementClient", c.etcdAddr, false, nil)
 	c.LocalAuthListManagement = client.NewXClient("LocalAuthListManagementClient", client.Failtry, client.RandomSelect, d6, client.DefaultOption)
 }
 func (c *RPCXPlugin) Heartbeat(ctx context.Context, id string, uniqueid string, request protocol.Request) (protocol.Response, error) {

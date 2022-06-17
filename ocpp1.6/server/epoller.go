@@ -36,7 +36,7 @@ type epoller struct {
 	eventfd    int
 	eventfdBuf []byte
 	wakeSignal int32
-	asyncQueue Queue
+	asyncQueue queue
 }
 
 var (
@@ -69,14 +69,14 @@ func createEpoller() (*epoller, error) {
 		unix.EpollCtl(epoller.epollfd, unix.EPOLL_CTL_ADD, epoller.eventfd, &unix.EpollEvent{Fd: int32(epoller.eventfd), Events: readEvents})); err != nil {
 		return nil, err
 	}
-	epoller.asyncQueue = NewEpollEventsQueue()
+	epoller.asyncQueue = newEpollEventsQueue()
 	return epoller, nil
 }
 
-func (e *epoller) trigger(fn TaskFunc, arg interface{}) (err error) {
-	task := GetTask()
-	task.RunFunc, task.RunArg = fn, arg
-	e.asyncQueue.Push(task)
+func (e *epoller) trigger(fn taskFunc, arg interface{}) (err error) {
+	task := getTask()
+	task.runFunc, task.runArg = fn, arg
+	e.asyncQueue.push(task)
 	if atomic.CompareAndSwapInt32(&e.wakeSignal, 0, 1) {
 		for _, err = unix.Write(e.eventfd, b); err == unix.EINTR || err == unix.EAGAIN; _, err = unix.Write(e.eventfd, b) {
 		}
@@ -131,16 +131,16 @@ func (e *epoller) reactor(fn func(fd int, ev uint32) error) error {
 		}
 		if wake {
 			wake = false
-			for t, _ := e.asyncQueue.Pop(); t != nil; t, _ = e.asyncQueue.Pop() {
-				task := t.(*Task)
-				switch err = task.RunFunc(task.RunArg); err {
+			for t, _ := e.asyncQueue.pop(); t != nil; t, _ = e.asyncQueue.pop() {
+				task := t.(*task)
+				switch err = task.runFunc(task.runArg); err {
 				case nil:
 				case ErrReactorShutdown:
 					return err
 				default:
 					log.Warnf("occues errors in custom function in reactor:%v", err)
 				}
-				PutTask(task)
+				putTask(task)
 			}
 			atomic.StoreInt32(&e.wakeSignal, 0)
 		}

@@ -12,6 +12,7 @@ var options = &option{
 
 type opt func(*option)
 
+//WithOptions used for some custom events
 func WithOptions(opts ...opt) {
 	for _, opt := range opts {
 		opt(options)
